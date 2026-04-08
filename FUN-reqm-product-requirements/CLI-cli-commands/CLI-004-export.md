@@ -14,7 +14,7 @@ relationships:
 
 ## Description
 
-The `reqm list` command shall accept a `--root <path>` option that overrides the default requirements root directory (default: `requirements/`).
+The `reqm list` command shall accept a `--root <path>` option that overrides the default requirements root directory (default: `FUN-reqm-product-requirements/`).
 
 ## Rationale
 
@@ -23,4 +23,4 @@ Users may store requirements outside the default path; `--root` enables the tool
 ## Acceptance Criteria
 
 - `reqm list --root <path>` discovers requirements under `<path>`.
-- When `--root` is specified, no requirements are read from `requirements/`.
+- When `--root` is specified, no requirements are read from `FUN-reqm-product-requirements/`.

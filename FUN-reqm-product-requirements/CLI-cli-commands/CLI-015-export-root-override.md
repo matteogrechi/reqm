@@ -23,4 +23,4 @@ Consistent with other commands, `--root` enables export of requirements stored o
 ## Acceptance Criteria
 
 - `reqm export requirements --root <path>` exports requirements read from `<path>`.
-- When `--root` is specified, no requirements are read from `requirements/`.
+- When `--root` is specified, no requirements are read from `FUN-reqm-product-requirements/`.

@@ -42,12 +42,12 @@ reqm export test-results -o v.xlsx # export test results
 ## Requirements are markdown files
 
 ```text
-requirements/
-├── .folder-metadata.md      # folder metadata
-├── CLI-cli/
+FUN-reqm-product-requirements/
+├── .folder-metadata.md            # folder metadata
+├── CLI-cli-commands/
 │   ├── .folder-metadata.md
-│   └── CLI-001-list.md      # one file per requirement
-└── EXP-export/
+│   └── CLI-001-list.md            # one file per requirement
+└── EXP-export-reports/
     └── ...
 ```
 

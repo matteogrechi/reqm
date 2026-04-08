@@ -115,4 +115,4 @@ def test_load_requirements_nested(fixtures_dir: Path):
     reqs = load_requirements(fixtures_dir)
     nested = [r for r in reqs if r.id == "F"]
     assert len(nested) == 1
-    assert "group-a" in str(nested[0].path)
+    assert "GA-group-a-folder" in str(nested[0].path)

@@ -34,8 +34,8 @@ Field values must be from the allowed set:
 ## Usage
 
 ```sh
-reqm validate              # validates requirements/ (default)
-reqm validate --root docs/ # validates a different directory
+reqm validate                        # validates FUN-reqm-product-requirements/ (default)
+reqm validate --root docs/           # validates a different directory
 ```
 
 On success: prints `All requirements valid.` and exits 0.
