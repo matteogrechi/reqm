@@ -4,9 +4,27 @@ Minimal requirements manager. Read, validate, export — nothing else.
 
 ## Install
 
+### Requirements
+
+- **Python** ≥ 3.14
+- **pip** (or **uv** for faster installs)
+- Supported platforms: macOS, Linux
+
+### Steps
+
 ```bash
+# Using pip
 pip install -e ".[dev]"
+
+# Using uv (recommended)
+uv sync --all-extras
 ```
+
+This installs `reqm` in editable mode along with its dependencies:
+- **click** — CLI framework
+- **pyyaml** — YAML frontmatter parsing
+- **openpyxl** — Excel export
+- **pytest** (dev) — test suite
 
 ## Usage
 
