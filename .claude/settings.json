@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest*)",
+      "Bash(pip install*)",
+      "Bash(reqm*)",
+      "Bash(find requirements*)",
+      "Bash(cat requirements*)",
+      "Read(**)",
+      "Write(reqm/**)",
+      "Write(tests/**)",
+      "Write(docs/**)",
+      "Write(.claude/**)"
+    ],
+    "deny": [
+      "Write(requirements/**)"
+    ]
+  }
+}
