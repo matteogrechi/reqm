@@ -1,0 +1,55 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.qwen/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+*.cover
+.hypothesis/
+
+# CLI history & logs
+.history
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project-specific
+*.xlsx
+.env

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reqm"
+version = "0.1.0"
+description = "Minimal requirements manager — read, validate, export"
+requires-python = ">=3.14"
+dependencies = [
+    "click>=8.1",
+    "pyyaml>=6.0",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov"]
+
+[project.scripts]
+reqm = "reqm.cli:cli"
+
+[project.entry-points."reqm.exporters"]
+requirements = "reqm.export.requirements:RequirementsExporter"
+traceability = "reqm.export.traceability:TraceabilityExporter"
+test-results  = "reqm.export.test_results:TestResultsExporter"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["reqm*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
