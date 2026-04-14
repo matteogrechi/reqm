@@ -61,7 +61,7 @@ def test_parse_requirement(fixtures_dir: Path):
     assert "parent requirement" in req.description
     assert "Used for testing" in req.rationale
     assert "Must work correctly" in req.acceptance_criteria
-    assert req.derived_from is None
+    assert req.derived_from == []
     assert req.related_to == []
     assert req.tags == ["test"]
 
@@ -69,14 +69,14 @@ def test_parse_requirement(fixtures_dir: Path):
 def test_parse_requirement_with_derived_from(fixtures_dir: Path):
     req = parse_requirement(fixtures_dir / "B-child-requirement.md")
     assert req.id == "B"
-    assert req.derived_from == "A"
+    assert req.derived_from == ["A"]
     assert req.related_to == ["C"]
 
 
 def test_parse_requirement_with_tests(fixtures_dir: Path):
     req = parse_requirement(fixtures_dir / "E-requirement-with-tests.md")
     assert req.id == "E"
-    assert req.tests == ["TEST-001", "TEST-002"]
+    assert req.validated_by == ["TEST-001", "TEST-002"]
 
 
 def test_parse_requirement_extra_keys(fixtures_dir: Path):

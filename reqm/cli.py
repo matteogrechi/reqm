@@ -125,7 +125,7 @@ def show(req_id: str, root: str) -> None:
     click.echo(f"Type:                {target.type}")
     click.echo(f"Verification:        {', '.join(target.verification) if target.verification else ''}")
     if target.derived_from:
-        click.echo(f"Derived From:        {target.derived_from}")
+        click.echo(f"Derived From:        {', '.join(target.derived_from)}")
     if target.related_to:
         click.echo(f"Related To:          {', '.join(target.related_to)}")
     if target.tags:

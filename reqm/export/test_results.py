@@ -27,7 +27,7 @@ class TestResultsExporter(AbstractExporter):
         - **Coverage**: Req ID, Title, Verified (Y/N), Method, Coverage %.
 
         Test outcome data is read from files referenced in requirement
-        frontmatter under the ``tests`` key.
+        frontmatter under the ``validated_by`` key.
 
         Args:
             requirements: Full collection of validated requirements.
@@ -43,7 +43,7 @@ class TestResultsExporter(AbstractExporter):
 
         # TODO: EXP-013 pending — test file format not yet specified
         for req in requirements:
-            for test_id in req.tests:
+            for test_id in req.validated_by:
                 ws_results.append([req.id, test_id, "", "", "", ""])
 
         apply_header_style(ws_results, "4472C4")
@@ -59,7 +59,7 @@ class TestResultsExporter(AbstractExporter):
         ws_coverage.append(["Req ID", "Title", "Verified (Y/N)", "Method", "Coverage %"])
 
         for req in requirements:
-            total = len(req.tests) if req.tests else 0
+            total = len(req.validated_by) if req.validated_by else 0
             if total > 0:
                 # TODO: EXP-013 pending — test file format not yet specified
                 passed = 0

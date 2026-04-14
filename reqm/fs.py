@@ -106,13 +106,15 @@ def parse_requirement(path: Path) -> Requirement:
 
     # relationships sub-dict
     rel = data.get("relationships", {}) or {}
-    derived_from = rel.get("derived_from") or data.get("derived_from")
+    _df_raw = rel.get("derived_from") or data.get("derived_from")
+    derived_from = [_df_raw] if isinstance(_df_raw, str) else (_df_raw or [])
     related_to = rel.get("related_to", []) or data.get("related_to", [])
+    validated_by = rel.get("validated_by", []) or []
 
     known_keys = {
         "id", "title", "type", "verification", "tags",
         "derived_from", "related_to", "relationships",
-        "priority", "status", "stability", "tests",
+        "priority", "status", "stability",
         "description", "rationale", "acceptance_criteria",
     }
     extra = {k: v for k, v in data.items() if k not in known_keys}
@@ -132,7 +134,7 @@ def parse_requirement(path: Path) -> Requirement:
         priority=data.get("priority"),
         status=data.get("status"),
         stability=data.get("stability"),
-        tests=data.get("tests", []) or [],
+        validated_by=validated_by,
         extra=extra,
     )
 

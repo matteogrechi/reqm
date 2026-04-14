@@ -51,7 +51,7 @@ class TraceabilityExporter(AbstractExporter):
             row = [req.id]
             for child_id in child_ids:
                 child = req_by_id.get(child_id)
-                if child and child.derived_from == req.id:
+                if child and req.id in child.derived_from:
                     row.append("✓")
                 else:
                     row.append("")
@@ -73,7 +73,7 @@ class TraceabilityExporter(AbstractExporter):
         ws_orphans.append(["ID", "Title", "Type"])
 
         for req in requirements:
-            if req.derived_from is None and not req.related_to:
+            if not req.derived_from and not req.related_to:
                 ws_orphans.append([req.id, req.title, req.type])
 
         apply_header_style(ws_orphans, "BF8F00")

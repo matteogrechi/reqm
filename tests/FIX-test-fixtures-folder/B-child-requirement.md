@@ -5,7 +5,7 @@ type: Functional
 verification: [Analysis]
 tags: [test]
 relationships:
-  derived_from: A
+  derived_from: [A]
   related_to: [C]
 ---
 

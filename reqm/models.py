@@ -26,10 +26,10 @@ class Requirement:
     type: str = "Functional"
     verification: list[str] = field(default_factory=list)  # Test | Analysis | Inspection | Demonstration
     tags: list[str] = field(default_factory=list)
-    derived_from: str | None = None        # relationships.derived_from in frontmatter
+    derived_from: list[str] = field(default_factory=list)  # relationships.derived_from in frontmatter
     related_to: list[str] = field(default_factory=list)  # relationships.related_to in frontmatter
     priority: str | None = None
     status: str | None = None
     stability: str | None = None
-    tests: list[str] = field(default_factory=list)
+    validated_by: list[str] = field(default_factory=list)
     extra: dict = field(default_factory=dict)

@@ -48,10 +48,11 @@ def _check_broken_links(requirements: list[Requirement]) -> list[ValidationError
     errors: list[ValidationError] = []
     known_ids = {r.id for r in requirements}
     for req in requirements:
-        if req.derived_from and req.derived_from not in known_ids:
-            errors.append(
-                ValidationError(req_id=req.id, message=f"Broken link: derived_from '{req.derived_from}' does not exist")
-            )
+        for parent_id in req.derived_from:
+            if parent_id not in known_ids:
+                errors.append(
+                    ValidationError(req_id=req.id, message=f"Broken link: derived_from '{parent_id}' does not exist")
+                )
         for ref in req.related_to:
             if ref not in known_ids:
                 errors.append(

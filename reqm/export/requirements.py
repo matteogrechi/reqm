@@ -68,7 +68,7 @@ class RequirementsExporter(AbstractExporter):
                 req.acceptance_criteria,
                 req.type,
                 ", ".join(req.verification),
-                req.derived_from or "",
+                ", ".join(req.derived_from),
                 ", ".join(req.related_to),
                 ", ".join(req.tags),
                 "",  # Folder ID filled in by a later pass if needed

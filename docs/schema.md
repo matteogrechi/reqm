@@ -17,23 +17,21 @@ Each requirement is a Markdown file with YAML frontmatter.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `description` | section body | `""` | `## Description` section content |
-| `rationale` | section body | `""` | `## Rationale` section content |
-| `acceptance_criteria` | section body | `""` | `## Acceptance Criteria` section content |
+| `priority` | string | `null` | One of: `Critical`, `High`, `Medium`, `Low` |
+| `status` | string | `null` | One of: `Draft`, `Approved`, `Deprecated` |
+| `stability` | string | `null` | One of: `Volatile`, `Stable`, `Locked` |
 | `tags` | list | `[]` | Free-form tags |
-| `derived_from` | string | `null` | Parent requirement id (under `relationships`) |
-| `related_to` | list | `[]` | Related requirement ids (under `relationships`) |
-| `priority` | string | `null` | Priority level |
-| `status` | string | `null` | Current status |
-| `stability` | string | `null` | Stability indicator |
-| `tests` | list | `[]` | Linked test case ids |
+| `relationships` | block | — | See Relationships Block below |
 
 ### Relationships Block
 
+All inter-requirement links live under the `relationships` key:
+
 ```yaml
 relationships:
-  derived_from: PARENT-ID
-  related_to: [OTHER-ID-1, OTHER-ID-2]
+  derived_from: [PARENT-ID]         # list — one or more parent requirement IDs
+  related_to: [OTHER-ID-1, OTHER-ID-2]  # list — horizontally related requirements
+  validated_by: [TEST-001]          # list — linked test case IDs
 ```
 
 ### Unknown Keys
@@ -67,11 +65,15 @@ description: Optional description
 id: REQ-001
 title: System shall authenticate users
 type: Functional
+priority: High
+status: Draft
+stability: Stable
 verification: [Test, Analysis]
 tags: [security]
 relationships:
-  derived_from: ARCH-001
+  derived_from: [ARCH-001]
   related_to: [REQ-002]
+  validated_by: [TEST-001]
 ---
 
 ## Description

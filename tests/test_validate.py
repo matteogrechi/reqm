@@ -68,7 +68,7 @@ def test_no_duplicate_ids():
 
 
 def test_broken_links_derived_from():
-    reqs = [_req(id="A", derived_from="NONEXISTENT")]
+    reqs = [_req(id="A", derived_from=["NONEXISTENT"])]
     errors = _check_broken_links(reqs)
     assert any("derived_from" in e.message for e in errors)
 
@@ -82,7 +82,7 @@ def test_broken_links_related_to():
 def test_broken_links_valid():
     reqs = [
         _req(id="A"),
-        _req(id="B", derived_from="A", related_to=["A"]),
+        _req(id="B", derived_from=["A"], related_to=["A"]),
     ]
     errors = _check_broken_links(reqs)
     assert errors == []
@@ -114,7 +114,7 @@ def test_enum_values_all_valid():
 def test_validate_end_to_end_valid():
     reqs = [
         _req(id="A"),
-        _req(id="B", derived_from="A"),
+        _req(id="B", derived_from=["A"]),
     ]
     errors = validate(reqs)
     assert errors == []
