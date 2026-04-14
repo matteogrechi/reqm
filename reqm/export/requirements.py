@@ -3,29 +3,31 @@ from __future__ import annotations
 from pathlib import Path
 
 from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
 
 from reqm.export.base import AbstractExporter
 from reqm.export._style import apply_header_style
 from reqm.models import Requirement, FolderMeta
 
+
 _COLUMN_WIDTHS = {
-    "A": 16,  # ID
-    "B": 35,  # Title
-    "C": 40,  # Description
-    "D": 35,  # Rationale
-    "E": 30,  # Acceptance Criteria
-    "F": 16,  # Type
-    "G": 25,  # Verification Method
-    "H": 16,  # Derived From
-    "I": 25,  # Related To
-    "J": 20,  # Tags
-    "K": 15,  # Folder ID
+    "A": 12,  # Is Folder
+    "B": 16,  # ID
+    "C": 16,  # Parent
+    "D": 35,  # Title
+    "E": 40,  # Description
+    "F": 35,  # Rationale
+    "G": 30,  # Acceptance Criteria
+    "H": 16,  # Type
+    "I": 25,  # Verification Method
+    "J": 16,  # Derived From
+    "K": 25,  # Related To
+    "L": 20,  # Tags
+    "M": 60,  # Path
 }
 
 _HEADERS = [
-    "ID", "Title", "Description", "Rationale", "Acceptance Criteria",
-    "Type", "Verification Method", "Derived From", "Related To", "Tags", "Folder ID",
+    "Is Folder", "ID", "Parent", "Title", "Description", "Rationale", "Acceptance Criteria",
+    "Type", "Verification Method", "Derived From", "Related To", "Tags", "Path",
 ]
 
 
@@ -43,9 +45,12 @@ class RequirementsExporter(AbstractExporter):
 
         Sheets produced:
 
-        - **Requirements**: ID, Title, Description, Rationale, Acceptance
-          Criteria, Type, Verification, Derived From, Related To, Tags, Folder.
-        - **Folders**: ID, Title, Description.
+        - **Requirements**: folders and requirements interleaved in a single
+          sheet with columns ``Is Folder | ID | Parent | Title | Description |
+          Rationale | Acceptance Criteria | Type | Verification Method |
+          Derived From | Related To | Tags | Path``.
+          Folder rows have ``Is Folder=TRUE``; requirement-only columns are
+          blank. Requirement rows have ``Is Folder=FALSE``.
 
         Args:
             requirements: Full collection of validated requirements.
@@ -54,14 +59,31 @@ class RequirementsExporter(AbstractExporter):
         """
         wb = Workbook()
 
-        # --- Requirements sheet ---
-        ws_req = wb.active
-        ws_req.title = "Requirements"
-        ws_req.append(_HEADERS)
+        # Build path → folder ID lookup for parent resolution
+        folder_id_by_path = {f.path: f.id for f in folders}
+
+        ws = wb.active
+        ws.title = "Requirements"
+        ws.append(_HEADERS)
+
+        for f in folders:
+            parent_id = folder_id_by_path.get(f.path.parent, "")
+            ws.append([
+                True,
+                f.id,
+                parent_id,
+                f.title,
+                f.description,
+                "", "", "", "", "", "", "",
+                str(f.path),
+            ])
 
         for req in requirements:
-            ws_req.append([
+            parent_id = folder_id_by_path.get(req.path.parent, "")
+            ws.append([
+                False,
                 req.id,
+                parent_id,
                 req.title,
                 req.description,
                 req.rationale,
@@ -71,25 +93,13 @@ class RequirementsExporter(AbstractExporter):
                 ", ".join(req.derived_from),
                 ", ".join(req.related_to),
                 ", ".join(req.tags),
-                "",  # Folder ID filled in by a later pass if needed
+                str(req.path),
             ])
 
-        apply_header_style(ws_req, "4472C4")
-        ws_req.auto_filter.ref = ws_req.dimensions
+        apply_header_style(ws, "4472C4")
+        ws.auto_filter.ref = ws.dimensions
 
         for col_letter, width in _COLUMN_WIDTHS.items():
-            ws_req.column_dimensions[col_letter].width = width
-
-        # --- Folders sheet ---
-        ws_folders = wb.create_sheet("Folders")
-        ws_folders.append(["ID", "Title", "Description"])
-        for f in folders:
-            ws_folders.append([f.id, f.title, f.description])
-
-        apply_header_style(ws_folders, "70AD47")
-        ws_folders.auto_filter.ref = ws_folders.dimensions
-        ws_folders.column_dimensions["A"].width = 15
-        ws_folders.column_dimensions["B"].width = 35
-        ws_folders.column_dimensions["C"].width = 50
+            ws.column_dimensions[col_letter].width = width
 
         wb.save(str(output))

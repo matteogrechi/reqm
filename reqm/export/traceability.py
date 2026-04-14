@@ -4,6 +4,7 @@ from pathlib import Path
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment
+from openpyxl.utils import get_column_letter
 
 from reqm.export.base import AbstractExporter
 from reqm.export._style import apply_header_style
@@ -62,7 +63,7 @@ class TraceabilityExporter(AbstractExporter):
         # Set column widths
         ws_matrix.column_dimensions["A"].width = 16
         for i in range(2, len(child_ids) + 2):
-            col_letter = chr(64 + i)  # A=1, B=2, ...
+            col_letter = get_column_letter(i)
             ws_matrix.column_dimensions[col_letter].width = 14
             # Center-align cells in data columns
             for row_idx in range(2, len(requirements) + 2):

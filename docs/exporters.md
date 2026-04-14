@@ -14,16 +14,20 @@ reqm export <exporter-name> --root custom/requirements -o output.xlsx
 
 | Exporter | Output | Description |
 |---|---|---|
-| `requirements` | Two-sheet workbook | Requirements list + folder summary |
+| `requirements` | Single-sheet workbook | Folders and requirements interleaved |
 | `traceability` | Two-sheet workbook | Parent→child matrix + orphans list |
 | `test-results` | Two-sheet workbook | Test results + coverage report |
 
 ### Requirements (`reqm export requirements`)
 
-Produces a workbook with:
+Produces a single-sheet workbook:
 
-- **Requirements** sheet: `ID | Title | Description | Rationale | Acceptance Criteria | Type | Verification Method | Derived From | Related To | Tags | Folder ID`
-- **Folders** sheet: `ID | Title | Description`
+- **Requirements** sheet: `Is Folder | ID | Parent | Title | Description | Rationale | Acceptance Criteria | Type | Verification Method | Derived From | Related To | Tags | Path`
+
+Folders and requirements are interleaved. Folder rows have `Is Folder=TRUE` and
+carry `ID`, `Parent`, `Title`, `Description`, and `Path`; requirement-only
+columns are left blank. Requirement rows have `Is Folder=FALSE` and `Parent`
+set to the ID of the folder they belong to.
 
 ### Traceability (`reqm export traceability`)
 
