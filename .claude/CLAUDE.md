@@ -35,12 +35,14 @@ not covered by requirements without asking first.
 
 ## Skills
 
-Load the relevant skill file before working in that area:
+Skills are auto-invoked by the harness based on their trigger conditions. They can
+also be loaded explicitly with the Skill tool:
 
-- Touching `reqm/export/` or adding an exporter → read `.claude/skills/exporter.md`
-- Touching `reqm/models.py` or any frontmatter schema → read `.claude/skills/models.md`
-- Touching `reqm/validate.py` → read `.claude/skills/validate.md`
-- Rewriting or auditing any requirement file → read `.claude/skills/incose-rewrite.md`
+- Touching `reqm/export/` or adding an exporter → `/exporter` (`.claude/skills/exporter/SKILL.md`)
+- Touching `reqm/models.py` or any frontmatter schema → `/models` (`.claude/skills/models/SKILL.md`)
+- Touching `reqm/validate.py` → `/validate` (`.claude/skills/validate/SKILL.md`)
+- Rewriting or auditing any requirement file → `/incose-rewrite` (`.claude/skills/incose-rewrite/SKILL.md`)
+- Committing changes → `/commit` (`.claude/skills/commit/SKILL.md`)
 
 ## Workflow
 
