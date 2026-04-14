@@ -5,6 +5,7 @@ from reqm.validate import (
     _check_duplicate_ids,
     _check_broken_links,
     _check_enum_values,
+    _check_unknown_keys,
     validate,
 )
 from reqm.models import Requirement
@@ -108,6 +109,21 @@ def test_enum_values_all_valid():
         _req(id="D", type="Constraint", verification=["Demonstration"]),
     ]
     errors = _check_enum_values(reqs)
+    assert errors == []
+
+
+def test_unknown_keys_flagged():
+    req = _req(extra={"foo": "bar", "baz": 1})
+    errors = _check_unknown_keys([req])
+    assert len(errors) == 2
+    assert all("Unknown frontmatter key" in e.message for e in errors)
+    assert any("'foo'" in e.message for e in errors)
+    assert any("'baz'" in e.message for e in errors)
+
+
+def test_no_unknown_keys():
+    req = _req()
+    errors = _check_unknown_keys([req])
     assert errors == []
 
 

@@ -12,7 +12,7 @@ Load this skill before touching `reqm/models.py` or any requirement frontmatter.
 - **Dataclasses only** — no I/O, no business logic, no methods beyond `__post_init__` for normalisation.
 - **Add fields as optional with a default** — never break existing files.
 - **New enum values must be added to both `models.py` and `validate.py`** — never add one without the other.
-- **`extra: dict` absorbs unknown keys** — never raise on unknown frontmatter fields.
+- **`extra: dict` collects unknown keys** — validation raises a `ValidationError` for each one via `_check_unknown_keys` in `validate.py`.
 - **Do not add methods to dataclasses** — keep them as pure data containers.
 
 ## Workflow

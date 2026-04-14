@@ -91,7 +91,8 @@ def parse_requirement(path: Path) -> Requirement:
 
     Body sections ``## Description``, ``## Rationale``, and
     ``## Acceptance Criteria`` are extracted and mapped to fields.
-    Any unknown frontmatter keys are stored in ``extra``.
+    Any unrecognised frontmatter keys are stored in ``extra`` and will
+    produce a validation error when ``validate()`` is called.
 
     Args:
         path: Path to the requirement .md file.

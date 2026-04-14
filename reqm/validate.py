@@ -61,6 +61,15 @@ def _check_broken_links(requirements: list[Requirement]) -> list[ValidationError
     return errors
 
 
+def _check_unknown_keys(requirements: list[Requirement]) -> list[ValidationError]:
+    """Emit an error for each unrecognised frontmatter key."""
+    errors: list[ValidationError] = []
+    for req in requirements:
+        for key in req.extra:
+            errors.append(ValidationError(req_id=req.id, message=f"Unknown frontmatter key: '{key}'"))
+    return errors
+
+
 def _check_enum_values(requirements: list[Requirement]) -> list[ValidationError]:
     """Validate that type and verification values are within allowed enumerations."""
     errors: list[ValidationError] = []
@@ -85,6 +94,7 @@ def validate(requirements: list[Requirement]) -> list[ValidationError]:
     - No duplicate IDs
     - All derived_from and related_to references resolve to existing IDs
     - Type and verification values are within allowed enumerations
+    - No unrecognised frontmatter keys
 
     Args:
         requirements: Full collection of parsed requirements.
@@ -97,4 +107,5 @@ def validate(requirements: list[Requirement]) -> list[ValidationError]:
     errors.extend(_check_duplicate_ids(requirements))
     errors.extend(_check_broken_links(requirements))
     errors.extend(_check_enum_values(requirements))
+    errors.extend(_check_unknown_keys(requirements))
     return errors
