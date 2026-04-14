@@ -44,14 +44,23 @@ also be loaded explicitly with the Skill tool:
 - Rewriting or auditing any requirement file → `/incose-rewrite` (`.claude/skills/incose-rewrite/SKILL.md`)
 - Committing changes → `/commit` (`.claude/skills/commit/SKILL.md`)
 
+## Tooling
+
+Use `uv` for all Python tool invocations — never call `python`, `pip`, or `pytest` directly:
+
+```sh
+uv run pytest
+uv run reqm validate <path>
+```
+
 ## Workflow
 
 1. Read all files under `FUN-reqm-product-requirements/`
 2. Diff requirements against current implementation
 3. Implement what is missing or changed
 4. Update `docs/` to reflect the current state
-5. Run `pytest` — fix until green
-6. Run `reqm validate` on the sample requirements — fix until clean
+5. Run `uv run pytest` — fix until green
+6. Run `uv run reqm validate` on the sample requirements — fix until clean
 
 ## Code style
 
