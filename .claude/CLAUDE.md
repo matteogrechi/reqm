@@ -43,6 +43,7 @@ also be loaded explicitly with the Skill tool:
 - Touching `reqm/validate.py` → `/validate` (`.claude/skills/validate/SKILL.md`)
 - Rewriting or auditing any requirement file → `/incose-rewrite` (`.claude/skills/incose-rewrite/SKILL.md`)
 - Committing changes → `/commit` (`.claude/skills/commit/SKILL.md`)
+- Any feature request or feature change → `/feature` (`.claude/skills/feature/SKILL.md`)
 
 ## Tooling
 
