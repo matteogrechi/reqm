@@ -10,6 +10,7 @@ from reqm.fs import (
     parse_validation_item,
     load_folder_meta,
     load_requirements,
+    load_project_meta,
     load_validation_items,
 )
 
@@ -141,3 +142,83 @@ def test_load_validation_items(validation_items_dir: Path):
 def test_load_validation_items_empty_dir(tmp_path: Path):
     items = load_validation_items(tmp_path)
     assert items == []
+
+
+def test_load_project_meta_missing(tmp_path: Path):
+    """Returns a default ProjectMeta when file is absent."""
+    result = load_project_meta(tmp_path)
+    assert result.path == tmp_path
+    assert result.project_key == ""
+    assert result.related_projects == []
+
+
+def test_load_project_meta_present(tmp_path: Path):
+    """Parses a valid .project-metadata.md file."""
+    meta_file = tmp_path / ".project-metadata.md"
+    meta_file.write_text(
+        """---
+project_key: REQM
+related_projects:
+  - id: SYS
+    title: System Architecture
+    local_path: ../sys-arch
+---
+
+## Description
+
+Test project.
+"""
+    )
+    result = load_project_meta(tmp_path)
+    assert result.path == tmp_path
+    assert result.project_key == "REQM"
+    assert len(result.related_projects) == 1
+    rp = result.related_projects[0]
+    assert rp.id == "SYS"
+    assert rp.title == "System Architecture"
+    assert rp.local_path == "../sys-arch"
+
+
+def test_load_project_meta_empty_related_projects(tmp_path: Path):
+    """Handles missing or null related_projects gracefully."""
+    meta_file = tmp_path / ".project-metadata.md"
+    meta_file.write_text(
+        """---
+project_key: STANDALONE
+related_projects:
+---
+
+## Notes
+
+No related projects.
+"""
+    )
+    result = load_project_meta(tmp_path)
+    assert result.project_key == "STANDALONE"
+    assert result.related_projects == []
+
+
+def test_load_project_meta_multiple_related(tmp_path: Path):
+    """Parses multiple related_projects entries."""
+    meta_file = tmp_path / ".project-metadata.md"
+    meta_file.write_text(
+        """---
+project_key: CORE
+related_projects:
+  - id: SYS
+    title: System Architecture
+    local_path: ../sys-arch
+  - id: TEST
+    title: Test Framework
+    local_path: /abs/path/to/tests
+---
+
+## Description
+
+Core project with multiple relations.
+"""
+    )
+    result = load_project_meta(tmp_path)
+    assert len(result.related_projects) == 2
+    assert result.related_projects[0].id == "SYS"
+    assert result.related_projects[1].local_path == "/abs/path/to/tests"

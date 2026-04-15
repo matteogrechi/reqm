@@ -14,7 +14,7 @@ relationships:
 
 ## Description
 
-All versioning, history, diffing, and baselining of requirements shall be delegated entirely to git; the tool shall not provide any equivalent capability.
+The tool shall rely exclusively on git for all versioning, history, diffing, and baselining of requirements, providing no equivalent internal capability.
 
 ## Rationale
 
@@ -22,5 +22,6 @@ Reimplementing version control duplicates well-established git functionality, ad
 
 ## Acceptance Criteria
 
-- Requirements can be diffed, branched, and tagged using standard git commands with no involvement from reqm.
+- Requirements can be diffed and branched using standard git commands without invoking any `reqm` command.
+- Requirements can be tagged using standard git commands without invoking any `reqm` command.
 - The `reqm` codebase contains no module that reads from or writes to a git repository on behalf of the user.

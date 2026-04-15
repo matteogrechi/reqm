@@ -1,6 +1,6 @@
 ---
 id: CLI-007
-title: show exits 1 with an error message when the ID is not found
+title: show prints an error to stderr when the ID is not found
 type: Functional
 priority: High
 status: Draft
@@ -9,18 +9,17 @@ verification: [Test]
 tags: [cli, show]
 relationships:
   derived_from: null
-  related_to: [CLI-006]
+  related_to: [CLI-006, CLI-017]
 ---
 
 ## Description
 
-When the given ID does not exist in the requirements collection, the `reqm show` command shall print an error message to stderr and exit with code 1.
+When the given ID does not exist in the requirements collection, the `reqm show` command shall print an error message to stderr.
 
 ## Rationale
 
-A non-zero exit code allows scripts and CI pipelines to detect and handle missing requirements programmatically; stderr output keeps the error separate from normal output.
+Writing the error to stderr keeps it separate from normal stdout output, allowing scripts and CI pipelines to distinguish error messages from valid requirement content.
 
 ## Acceptance Criteria
 
-- `reqm show UNKNOWN-999` prints an error message to stderr.
-- The exit code is 1 when the given ID is not found.
+- `reqm show UNKNOWN-999` prints a non-empty error message to stderr.

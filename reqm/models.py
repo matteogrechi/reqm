@@ -5,6 +5,23 @@ from pathlib import Path
 
 
 @dataclass
+class RelatedProject:
+    """A project related to the current one, used for cross-project traceability."""
+    id: str
+    title: str
+    local_path: str = ""
+
+
+@dataclass
+class ProjectMeta:
+    """Parsed from .project-metadata.md in the requirements root."""
+    path: Path
+    project_key: str = ""
+    validation_items_path: str = ""
+    related_projects: list[RelatedProject] = field(default_factory=list)
+
+
+@dataclass
 class FolderMeta:
     """Parsed from .folder-metadata.md in each requirements folder."""
     path: Path

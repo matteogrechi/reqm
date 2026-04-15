@@ -14,7 +14,7 @@ relationships:
 
 ## Description
 
-The tool shall write export output exclusively to the file path provided via `--output`; no files shall be written to any other location, including the requirements directory.
+The `reqm export` command shall write its output exclusively to the file path provided via `--output`, creating no files at any other location.
 
 ## Rationale
 

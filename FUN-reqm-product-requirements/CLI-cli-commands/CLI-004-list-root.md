@@ -1,6 +1,6 @@
 ---
 id: CLI-004
-title: list --root option overrides the default requirements root
+title: list --root option overrides default requirements root
 type: Functional
 priority: Medium
 status: Draft

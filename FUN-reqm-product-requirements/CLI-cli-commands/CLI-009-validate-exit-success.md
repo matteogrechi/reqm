@@ -1,6 +1,6 @@
 ---
 id: CLI-009
-title: validate exits 0 with a success message when no errors are found
+title: validate prints a success message when no errors are found
 type: Functional
 priority: High
 status: Draft
@@ -9,18 +9,17 @@ verification: [Test]
 tags: [cli, validation]
 relationships:
   derived_from: null
-  related_to: [CLI-008]
+  related_to: [CLI-008, CLI-018]
 ---
 
 ## Description
 
-The `reqm validate` command shall print a success message to stdout and exit with code 0 when no validation errors are found.
+The `reqm validate` command shall print a success message to stdout when no validation errors are found.
 
 ## Rationale
 
-A predictable zero exit code allows CI pipelines to gate builds and releases on a clean validation result.
+An explicit success message confirms to the user that validation ran and found nothing wrong, distinguishing a clean run from a silent failure.
 
 ## Acceptance Criteria
 
-- `reqm validate` on a valid requirements set prints a success message to stdout.
-- The exit code is 0 when all validation rules pass.
+- `reqm validate` on a valid requirements set prints a non-empty success message to stdout.

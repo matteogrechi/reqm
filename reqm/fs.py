@@ -2,7 +2,7 @@
 from __future__ import annotations
 import yaml
 from pathlib import Path
-from reqm.models import Requirement, FolderMeta, ValidationItem
+from reqm.models import Requirement, FolderMeta, ProjectMeta, RelatedProject, ValidationItem
 
 
 def _split_frontmatter(text: str) -> tuple[str, str]:
@@ -202,6 +202,44 @@ def load_folder_meta(folder: Path) -> FolderMeta | None:
     if not meta_path.exists():
         return None
     return parse_folder_meta(meta_path)
+
+
+def load_project_meta(root: Path) -> ProjectMeta:
+    """Parse .project-metadata.md from the given root directory.
+
+    Reads the YAML frontmatter and builds a ``ProjectMeta`` instance.
+    If the file is absent, returns a default instance with empty values.
+
+    Args:
+        root: Directory that may contain a .project-metadata.md file.
+
+    Returns:
+        Parsed ProjectMeta (never None).
+    """
+    meta_path = root / ".project-metadata.md"
+    if not meta_path.exists():
+        return ProjectMeta(path=root)
+
+    text = meta_path.read_text(encoding="utf-8")
+    yaml_text, _body = _split_frontmatter(text)
+    data = yaml.safe_load(yaml_text) or {}
+
+    related_projects: list[RelatedProject] = []
+    for entry in data.get("related_projects", []) or []:
+        related_projects.append(
+            RelatedProject(
+                id=entry.get("id", ""),
+                title=entry.get("title", ""),
+                local_path=entry.get("local_path", ""),
+            )
+        )
+
+    return ProjectMeta(
+        path=root,
+        project_key=data.get("project_key", ""),
+        validation_items_path=data.get("validation_items_path", "") or "",
+        related_projects=related_projects,
+    )
 
 
 def load_validation_items(root: Path) -> list[ValidationItem]:

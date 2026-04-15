@@ -5,9 +5,10 @@ from pathlib import Path
 
 import click
 
-from reqm.fs import load_requirements, load_folder_meta
+from reqm.fs import load_requirements, load_folder_meta, load_project_meta, load_validation_items
 from reqm import validate as validate_mod
 from reqm.export.base import AbstractExporter
+from reqm.models import ValidationItem
 
 
 class _ExportGroup(click.Group):
@@ -47,6 +48,17 @@ def _collect_folders(root: Path) -> list:
     return folders
 
 
+def _load_items(root: Path) -> list[ValidationItem]:
+    """Load validation items using the path declared in project metadata."""
+    project_meta = load_project_meta(root)
+    if not project_meta.validation_items_path:
+        return []
+    vi_path = Path(project_meta.validation_items_path)
+    if not vi_path.exists():
+        return []
+    return load_validation_items(vi_path)
+
+
 def _register_exporters(export_group: click.Group) -> None:
     """Load reqm.exporters entry points and wrap each as a click.Command."""
     import importlib.metadata as importlib_metadata
@@ -62,9 +74,10 @@ def _register_exporters(export_group: click.Group) -> None:
         def _export_cmd(root: str, output: str | None, _exporter=instance) -> None:
             reqs = load_requirements(Path(root))
             folders = _collect_folders(Path(root))
+            items = _load_items(Path(root))
             if output is None:
                 output = f"{_exporter.name}.xlsx"
-            _exporter.export(reqs, folders, [], Path(output))
+            _exporter.export(reqs, folders, items, Path(output))
 
         export_group.add_command(_export_cmd)
 
@@ -149,7 +162,8 @@ def show(req_id: str, root: str) -> None:
 def validate(root: str) -> None:
     """Validate all requirements. Exits non-zero on errors."""
     reqs = load_requirements(Path(root))
-    errors = validate_mod.validate(reqs)
+    items = _load_items(Path(root))
+    errors = validate_mod.validate(reqs, items or None)
     if errors:
         for e in errors:
             click.echo(f"[{e.req_id}] {e.message}")
