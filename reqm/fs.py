@@ -1,8 +1,8 @@
-"""File system helpers: discover and parse requirement markdown files."""
+"""File system helpers: discover and parse requirement and validation item files."""
 from __future__ import annotations
 import yaml
 from pathlib import Path
-from reqm.models import Requirement, FolderMeta
+from reqm.models import Requirement, FolderMeta, ValidationItem
 
 
 def _split_frontmatter(text: str) -> tuple[str, str]:
@@ -110,7 +110,8 @@ def parse_requirement(path: Path) -> Requirement:
     _df_raw = rel.get("derived_from") or data.get("derived_from")
     derived_from = [_df_raw] if isinstance(_df_raw, str) else (_df_raw or [])
     related_to = rel.get("related_to", []) or data.get("related_to", [])
-    validated_by = rel.get("validated_by", []) or []
+    validated_by_raw = rel.get("validated_by", []) or []
+    validated_by = [str(v) for v in validated_by_raw]
 
     known_keys = {
         "id", "title", "type", "verification", "tags",
@@ -140,6 +141,54 @@ def parse_requirement(path: Path) -> Requirement:
     )
 
 
+def parse_validation_item(path: Path) -> ValidationItem:
+    """Parse a single validation item markdown file with YAML frontmatter.
+
+    Body sections ``## Objective``, ``## Preconditions``, ``## Procedure``,
+    and ``## Pass Criteria`` are extracted and mapped to fields.
+
+    Args:
+        path: Path to the validation item .md file.
+
+    Returns:
+        Parsed ValidationItem dataclass.
+    """
+    text = path.read_text(encoding="utf-8")
+    yaml_text, body = _split_frontmatter(text)
+    data = yaml.safe_load(yaml_text) or {}
+    sections = _extract_sections(body)
+
+    rel = data.get("relationships", {}) or {}
+    _df_raw = rel.get("derived_from") or data.get("derived_from")
+    derived_from = [_df_raw] if isinstance(_df_raw, str) else (_df_raw or [])
+    related_to = rel.get("related_to", []) or data.get("related_to", [])
+
+    known_keys = {
+        "id", "title", "method", "level", "status", "priority", "stability",
+        "tags", "relationships", "derived_from", "related_to",
+    }
+    extra = {k: v for k, v in data.items() if k not in known_keys}
+
+    return ValidationItem(
+        path=path,
+        id=data.get("id", ""),
+        title=data.get("title", ""),
+        method=data.get("method", ""),
+        level=data.get("level", ""),
+        status=data.get("status"),
+        priority=data.get("priority"),
+        stability=data.get("stability"),
+        tags=data.get("tags", []) or [],
+        derived_from=derived_from,
+        related_to=related_to or [],
+        objective=sections.get("Objective", "").strip("\n"),
+        preconditions=sections.get("Preconditions", "").strip("\n"),
+        procedure=sections.get("Procedure", "").strip("\n"),
+        pass_criteria=sections.get("Pass Criteria", "").strip("\n"),
+        extra=extra,
+    )
+
+
 def load_folder_meta(folder: Path) -> FolderMeta | None:
     """Parse .folder-metadata.md in the given folder, or return None if absent.
 
@@ -153,6 +202,29 @@ def load_folder_meta(folder: Path) -> FolderMeta | None:
     if not meta_path.exists():
         return None
     return parse_folder_meta(meta_path)
+
+
+def load_validation_items(root: Path) -> list[ValidationItem]:
+    """Recursively discover and parse all validation item files under root.
+
+    Skips dotfiles and files without YAML frontmatter.
+
+    Args:
+        root: Directory to search for validation item markdown files.
+
+    Returns:
+        All parsed validation items found under root, in discovery order.
+    """
+    items: list[ValidationItem] = []
+    for md_path in sorted(root.rglob("*.md")):
+        if md_path.name.startswith("."):
+            continue
+        text = md_path.read_text(encoding="utf-8")
+        first_line = text.splitlines()[0].strip() if text.splitlines() else ""
+        if first_line != "---":
+            continue
+        items.append(parse_validation_item(md_path))
+    return items
 
 
 def load_requirements(root: Path) -> list[Requirement]:

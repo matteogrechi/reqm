@@ -62,7 +62,7 @@ tags: [power, startup]           # optional
 relationships:                   # optional block
   derived_from: [SYS-000]        #   one or more parent requirement IDs
   related_to: [SYS-002, SYS-003] # related requirement IDs
-  validated_by: [TEST-001]       # linked test case IDs
+  validated_by: [TC-001, TC-002] # optional — plain IDs of linked validation items
 ---
 ```
 

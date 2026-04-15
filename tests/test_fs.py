@@ -7,8 +7,10 @@ from reqm.fs import (
     _extract_sections,
     parse_folder_meta,
     parse_requirement,
+    parse_validation_item,
     load_folder_meta,
     load_requirements,
+    load_validation_items,
 )
 
 
@@ -76,7 +78,7 @@ def test_parse_requirement_with_derived_from(fixtures_dir: Path):
 def test_parse_requirement_with_tests(fixtures_dir: Path):
     req = parse_requirement(fixtures_dir / "E-requirement-with-tests.md")
     assert req.id == "E"
-    assert req.validated_by == ["TEST-001", "TEST-002"]
+    assert req.validated_by == ["TC-001", "TC-002"]
 
 
 def test_parse_requirement_extra_keys(fixtures_dir: Path):
@@ -116,3 +118,26 @@ def test_load_requirements_nested(fixtures_dir: Path):
     nested = [r for r in reqs if r.id == "F"]
     assert len(nested) == 1
     assert "GA-group-a-folder" in str(nested[0].path)
+
+
+def test_parse_validation_item(validation_items_dir: Path):
+    item = parse_validation_item(validation_items_dir / "TC-001.md")
+    assert item.id == "TC-001"
+    assert item.title == "Verify requirement E links to validation items"
+    assert item.method == "Test"
+    assert item.level == "System"
+    assert item.status == "Draft"
+    assert "Objective" in item.objective or item.objective != ""
+    assert item.extra == {}
+
+
+def test_load_validation_items(validation_items_dir: Path):
+    items = load_validation_items(validation_items_dir)
+    ids = {i.id for i in items}
+    assert ids == {"TC-001", "TC-002"}
+    assert len(items) == 2
+
+
+def test_load_validation_items_empty_dir(tmp_path: Path):
+    items = load_validation_items(tmp_path)
+    assert items == []

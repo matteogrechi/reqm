@@ -1,6 +1,6 @@
 ---
 id: EXP-012
-title: Coverage % is computed as passed tests divided by total linked tests
+title: Item Count equals the number of validation items linked to each requirement
 type: Functional
 priority: High
 status: Draft
@@ -14,13 +14,14 @@ relationships:
 
 ## Description
 
-The Coverage % value for each requirement shall be computed as the ratio of passed tests to the total number of tests linked to that requirement, expressed as a percentage rounded to two decimal places.
+For each requirement, the Item Count field in the Coverage sheet shall equal the number of entries in that requirement's `validated_by` list.
 
 ## Rationale
 
-A ratio-based coverage metric is the standard ECSS measure of verification completeness; it accounts for partial coverage and distinguishes passed tests from merely executed ones.
+A count-based metric is the correct representation of the validation plan when execution results are managed externally; it avoids false precision from a pass/fail ratio that the tool cannot compute.
 
 ## Acceptance Criteria
 
-- Coverage % = (count of linked tests with Result = "Pass") / (count of all linked tests) × 100, rounded to two decimal places.
-- A requirement with no linked tests displays a Coverage % of 0.00.
+- Item Count equals `len(validated_by)` for each requirement.
+- Item Count is 0 for requirements with no `validated_by` entries.
+- Item Count is a non-negative integer.

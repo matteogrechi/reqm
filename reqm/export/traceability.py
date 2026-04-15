@@ -8,7 +8,7 @@ from openpyxl.utils import get_column_letter
 
 from reqm.export.base import AbstractExporter
 from reqm.export._style import apply_header_style
-from reqm.models import Requirement, FolderMeta
+from reqm.models import Requirement, FolderMeta, ValidationItem
 
 
 class TraceabilityExporter(AbstractExporter):
@@ -19,6 +19,7 @@ class TraceabilityExporter(AbstractExporter):
         self,
         requirements: list[Requirement],
         folders: list[FolderMeta],
+        items: list[ValidationItem],
         output: Path,
     ) -> None:
         """Write an ECSS traceability matrix workbook.
@@ -32,6 +33,7 @@ class TraceabilityExporter(AbstractExporter):
         Args:
             requirements: Full collection of validated requirements.
             folders: Folder metadata for all discovered folders.
+            items: Loaded validation items (unused by this exporter).
             output: Destination path for the .xlsx file.
         """
         wb = Workbook()

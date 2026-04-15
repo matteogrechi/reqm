@@ -9,12 +9,12 @@ verification: [Inspection]
 tags: [export, ecss, excel, testing, formatting]
 relationships:
   derived_from: null
-  related_to: [EXP-010, EXP-003, EXP-005]
+  related_to: [EXP-010, EXP-003, EXP-005, EXP-015]
 ---
 
 ## Description
 
-All sheets produced by the `test-results` exporter shall apply the same header formatting, freeze pane, column widths, and tab colour conventions defined in EXP-003 and EXP-005.
+All sheets produced by the `test-results` exporter shall apply the header formatting, freeze pane, column widths, and tab colour conventions defined in EXP-003, EXP-005, and EXP-015.
 
 ## Rationale
 
@@ -23,4 +23,5 @@ Consistent formatting across all exporters gives the deliverable package a unifi
 ## Acceptance Criteria
 
 - The Results and Coverage sheets conform to the header formatting specification in EXP-003 (bold, `#BDD7EE` fill, freeze pane).
-- The Results and Coverage sheets conform to the column width and tab colour specification in EXP-005.
+- The Results and Coverage sheets conform to the column width specification in EXP-005.
+- The Results and Coverage sheets conform to the tab colour specification in EXP-015.

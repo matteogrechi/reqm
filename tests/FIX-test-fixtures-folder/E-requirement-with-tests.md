@@ -7,7 +7,7 @@ tags: [test]
 relationships:
   derived_from: null
   related_to: []
-  validated_by: [TEST-001, TEST-002]
+  validated_by: [TC-001, TC-002]
 ---
 
 ## Description

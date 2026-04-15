@@ -1,28 +1,27 @@
 ---
 id: EXP-013
-title: test-results exporter reads test data from the frontmatter tests key
+title: test-results exporter resolves validation items referenced by validated_by
 type: Functional
 priority: High
 status: Draft
-stability: Volatile
+stability: Evolving
 verification: [Test]
 tags: [export, ecss, excel, testing]
 relationships:
   derived_from: null
-  related_to: [EXP-010]
+  related_to: [EXP-010, EXP-017]
 ---
 
 ## Description
 
-The `test-results` exporter shall read test outcome data exclusively from files referenced in requirement frontmatter under the `tests` key.
+The `test-results` exporter shall resolve each ID in a requirement's `validated_by` list against the collection of loaded `ValidationItem` objects and use the matched item's `title` in the Results sheet.
 
 ## Rationale
 
-Storing test references in requirement frontmatter keeps the linkage co-located with the requirement definition and uses the same git-native storage model as the requirements themselves.
+Keeping `validated_by` as a plain ID list — consistent with `derived_from` and `related_to` — and resolving titles at export time separates authoring from reporting and avoids data duplication.
 
 ## Acceptance Criteria
 
-- Test outcome records are derived only from files referenced by the `tests` frontmatter key.
-- Requirements with no `tests` frontmatter key produce no rows in the Results sheet.
-
-**Note**: The structure and file format of the referenced test result files is specified by a separate, pending requirement. Until that requirement is approved, this requirement retains `stability: Volatile`.
+- For each ID in `validated_by`, the exporter resolves it to a `ValidationItem` and writes its `title` in the Item Title column.
+- Requirements with no `validated_by` entries produce no rows in the Results sheet.
+- IDs that do not resolve to a known `ValidationItem` produce a row with a blank Item Title.

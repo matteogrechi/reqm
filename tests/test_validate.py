@@ -4,11 +4,12 @@ from reqm.validate import (
     _check_required_fields,
     _check_duplicate_ids,
     _check_broken_links,
+    _check_broken_validated_by_links,
     _check_enum_values,
     _check_unknown_keys,
     validate,
 )
-from reqm.models import Requirement
+from reqm.models import Requirement, ValidationItem
 from pathlib import Path
 
 
@@ -23,6 +24,17 @@ def _req(**kwargs):
     }
     data.update(kwargs)
     return Requirement(**data)
+
+
+def _item(**kwargs):
+    """Helper to create a minimal ValidationItem."""
+    data = {
+        "path": Path("/tmp/tc.md"),
+        "id": "TC-001",
+        "title": "Test item",
+    }
+    data.update(kwargs)
+    return ValidationItem(**data)
 
 
 def test_required_fields_all_present():
@@ -143,3 +155,31 @@ def test_validate_end_to_end_with_errors():
     ]
     errors = validate(reqs)
     assert len(errors) > 0
+
+
+def test_broken_validated_by_links_detected():
+    reqs = [_req(id="A", validated_by=["TC-999"])]
+    items: list[ValidationItem] = []
+    errors = _check_broken_validated_by_links(reqs, items)
+    assert any("validated_by" in e.message for e in errors)
+    assert any("TC-999" in e.message for e in errors)
+
+
+def test_broken_validated_by_links_valid():
+    reqs = [_req(id="A", validated_by=["TC-001"])]
+    items = [_item(id="TC-001")]
+    errors = _check_broken_validated_by_links(reqs, items)
+    assert errors == []
+
+
+def test_validate_skips_validated_by_when_items_none():
+    """validated_by check is skipped when items=None (no validation root configured)."""
+    reqs = [_req(id="A", validated_by=["NONEXISTENT"])]
+    errors = validate(reqs)  # items defaults to None
+    assert errors == []
+
+
+def test_validate_checks_validated_by_when_items_provided():
+    reqs = [_req(id="A", validated_by=["NONEXISTENT"])]
+    errors = validate(reqs, items=[])
+    assert any("validated_by" in e.message for e in errors)

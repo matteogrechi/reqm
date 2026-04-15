@@ -371,7 +371,6 @@ def test_export_requirements_sheet_names(tmp_path: Path, fixtures_dir: Path) -> 
     CliRunner().invoke(cli, ["export", "requirements", "--root", str(fixtures_dir), "-o", str(output)])
     wb = openpyxl.load_workbook(output)
     assert "Requirements" in wb.sheetnames
-    assert "Folders" in wb.sheetnames
 
 
 def test_export_requirements_column_headers(tmp_path: Path, fixtures_dir: Path) -> None:
@@ -380,8 +379,9 @@ def test_export_requirements_column_headers(tmp_path: Path, fixtures_dir: Path) 
     ws = openpyxl.load_workbook(output)["Requirements"]
     headers = [cell.value for cell in ws[1]]
     assert headers == [
-        "ID", "Title", "Description", "Rationale", "Acceptance Criteria",
-        "Type", "Verification Method", "Derived From", "Related To", "Tags", "Folder ID",
+        "Is Folder", "ID", "Parent", "Title", "Description", "Rationale",
+        "Acceptance Criteria", "Type", "Verification Method",
+        "Derived From", "Related To", "Tags", "Path",
     ]
 
 
@@ -389,7 +389,8 @@ def test_export_requirements_data_rows(tmp_path: Path, fixtures_dir: Path) -> No
     output = tmp_path / "out.xlsx"
     CliRunner().invoke(cli, ["export", "requirements", "--root", str(fixtures_dir), "-o", str(output)])
     ws = openpyxl.load_workbook(output)["Requirements"]
-    ids = [ws.cell(row=r, column=1).value for r in range(2, ws.max_row + 1)]
+    # Column 2 is ID (column 1 is Is Folder flag)
+    ids = [ws.cell(row=r, column=2).value for r in range(2, ws.max_row + 1)]
     assert "A" in ids
     assert "F" in ids  # nested requirement must also be exported
 
@@ -490,6 +491,7 @@ def test_full_workflow(tmp_path: Path) -> None:
     assert export_result.exit_code == 0
     assert output.exists()
     ws = openpyxl.load_workbook(output)["Requirements"]
-    exported_ids = [ws.cell(row=r, column=1).value for r in range(2, ws.max_row + 1)]
+    # Column 2 is ID (column 1 is Is Folder flag)
+    exported_ids = [ws.cell(row=r, column=2).value for r in range(2, ws.max_row + 1)]
     assert "SYS-001" in exported_ids
     assert "SYS-002" in exported_ids

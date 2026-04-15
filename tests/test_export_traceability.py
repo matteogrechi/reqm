@@ -16,7 +16,7 @@ def test_traceability_exporter(fixtures_dir: Path, tmp_path: Path):
 
     output = tmp_path / "traceability.xlsx"
     exporter = TraceabilityExporter()
-    exporter.export(reqs, folders, output)
+    exporter.export(reqs, folders, [], output)
 
     assert output.exists()
 
@@ -34,7 +34,7 @@ def test_matrix_has_checkmarks(fixtures_dir: Path, tmp_path: Path):
 
     output = tmp_path / "trace.xlsx"
     exporter = TraceabilityExporter()
-    exporter.export(reqs, folders, output)
+    exporter.export(reqs, folders, [], output)
 
     wb = load_workbook(str(output))
     ws = wb["Matrix"]
@@ -62,7 +62,7 @@ def test_orphans_sheet(fixtures_dir: Path, tmp_path: Path):
 
     output = tmp_path / "orphans.xlsx"
     exporter = TraceabilityExporter()
-    exporter.export(reqs, folders, output)
+    exporter.export(reqs, folders, [], output)
 
     wb = load_workbook(str(output))
     ws = wb["Orphans"]
@@ -86,7 +86,7 @@ def test_traceability_formatting(fixtures_dir: Path, tmp_path: Path):
 
     output = tmp_path / "trace_fmt.xlsx"
     exporter = TraceabilityExporter()
-    exporter.export(reqs, folders, output)
+    exporter.export(reqs, folders, [], output)
 
     wb = load_workbook(str(output))
     ws_matrix = wb["Matrix"]

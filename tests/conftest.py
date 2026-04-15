@@ -9,3 +9,9 @@ import pytest
 def fixtures_dir() -> Path:
     """Path to the test fixtures directory."""
     return Path(__file__).parent / "FIX-test-fixtures-folder"
+
+
+@pytest.fixture
+def validation_items_dir() -> Path:
+    """Path to the test validation items directory."""
+    return Path(__file__).parent / "FIX-validation-items"

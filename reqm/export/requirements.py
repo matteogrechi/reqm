@@ -6,7 +6,7 @@ from openpyxl import Workbook
 
 from reqm.export.base import AbstractExporter
 from reqm.export._style import apply_header_style
-from reqm.models import Requirement, FolderMeta
+from reqm.models import Requirement, FolderMeta, ValidationItem
 
 
 _COLUMN_WIDTHS = {
@@ -39,6 +39,7 @@ class RequirementsExporter(AbstractExporter):
         self,
         requirements: list[Requirement],
         folders: list[FolderMeta],
+        items: list[ValidationItem],
         output: Path,
     ) -> None:
         """Write an ECSS requirements list workbook.
@@ -55,6 +56,7 @@ class RequirementsExporter(AbstractExporter):
         Args:
             requirements: Full collection of validated requirements.
             folders: Folder metadata for all discovered folders.
+            items: Loaded validation items (unused by this exporter).
             output: Destination path for the .xlsx file.
         """
         wb = Workbook()

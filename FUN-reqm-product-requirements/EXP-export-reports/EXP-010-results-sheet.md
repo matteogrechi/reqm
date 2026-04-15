@@ -1,6 +1,6 @@
 ---
 id: EXP-010
-title: test-results exporter produces a Results sheet
+title: test-results exporter produces a Results sheet listing linked validation items
 type: Functional
 priority: High
 status: Draft
@@ -14,14 +14,15 @@ relationships:
 
 ## Description
 
-The `test-results` exporter shall produce an Excel workbook containing a sheet named "Results" with columns: Req ID, Test ID, Test Title, Result (Pass/Fail/Blocked/Not Run), Date, Notes.
+The `test-results` exporter shall produce an Excel workbook containing a sheet named "Results" with columns: Req ID, Item ID, Item Title.
 
 ## Rationale
 
-Linking test outcomes to requirements in a structured sheet enables auditors to verify that each requirement has been covered by at least one test, as required by ECSS.
+Listing the validation plan — which items are linked to each requirement — enables auditors to verify coverage without duplicating execution results that are managed by external systems.
 
 ## Acceptance Criteria
 
 - The output workbook contains a sheet named "Results".
-- The sheet contains exactly the columns: Req ID, Test ID, Test Title, Result, Date, Notes — in that order.
-- Each test outcome record occupies exactly one row.
+- The sheet contains exactly the columns: Req ID, Item ID, Item Title — in that order.
+- Each linked validation item occupies exactly one row.
+- Requirements with no linked validation items produce no rows in the Results sheet.

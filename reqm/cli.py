@@ -64,7 +64,7 @@ def _register_exporters(export_group: click.Group) -> None:
             folders = _collect_folders(Path(root))
             if output is None:
                 output = f"{_exporter.name}.xlsx"
-            _exporter.export(reqs, folders, Path(output))
+            _exporter.export(reqs, folders, [], Path(output))
 
         export_group.add_command(_export_cmd)
 

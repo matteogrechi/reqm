@@ -2,7 +2,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
-from reqm.models import Requirement, FolderMeta
+from reqm.models import Requirement, FolderMeta, ValidationItem
 
 
 class AbstractExporter(ABC):
@@ -33,6 +33,7 @@ class AbstractExporter(ABC):
         self,
         requirements: list[Requirement],
         folders: list[FolderMeta],
+        items: list[ValidationItem],
         output: Path,
     ) -> None:
         """Write the report to the given output path.
@@ -40,5 +41,6 @@ class AbstractExporter(ABC):
         Args:
             requirements: Full collection of validated requirements.
             folders: Folder metadata for all discovered folders.
+            items: Loaded validation items for cross-referencing.
             output: Destination path for the report file.
         """
