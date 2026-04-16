@@ -1,7 +1,8 @@
 # Validation
 
-reqm validates requirements against six rules. All rules run on every invocation
-of `reqm validate`.
+reqm validates requirements against six rules on every invocation of
+`reqm validate`. Two of these rules are conditional: ID format requires folder
+metadata; the `validated_by` check requires linked validation items.
 
 ## Rules
 
@@ -41,6 +42,15 @@ full requirement ID is self-describing without repetition — for example
 `REQM-ARCH-001`.
 
 This rule is skipped when the specification `id` is empty.
+
+### 6. Broken `validated_by` Links (`_check_broken_validated_by_links`)
+
+All `validated_by` references must resolve to known validation item IDs. Each
+unresolved reference generates a separate error.
+
+This rule runs only when validation items are loaded (i.e. when the specification
+has a `related_specifications` entry pointing to a `type: validation_items`
+specification).
 
 ## Usage
 

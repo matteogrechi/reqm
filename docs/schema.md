@@ -67,7 +67,7 @@ in any directory.
 
 ```yaml
 ---
-specification_key: REQM
+id: REQM
 related_specifications:
   - id: SYS
     local_path: ../sys-arch
@@ -76,7 +76,7 @@ related_specifications:
 
 | Field                    | Description                                                                                    |
 |--------------------------|------------------------------------------------------------------------------------------------|
-| `specification_key`      | Short identifier for this specification; used as the first segment of all requirement IDs.     |
+| `id`                     | Short identifier for this specification; used as the first segment of all requirement IDs.     |
 | `related_specifications` | Related specifications; each entry has `id` and `local_path`.                                  |
 
 ## Example

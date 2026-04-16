@@ -7,8 +7,10 @@ reqm uses a plugin-based exporter system. Built-in exporters are registered via
 
 ```sh
 reqm export <exporter-name> -o output.xlsx
-reqm export <exporter-name> --root custom/requirements -o output.xlsx
 ```
+
+The exporter discovers the specification root automatically by walking upward
+from the current directory until it finds `.specification-metadata.md`.
 
 ## Built-in Exporters
 
@@ -16,7 +18,7 @@ reqm export <exporter-name> --root custom/requirements -o output.xlsx
 |---|---|---|
 | `requirements` | Single-sheet workbook | Folders and requirements interleaved |
 | `traceability` | Two-sheet workbook | Parent→child matrix + orphans list |
-| `test-results` | Two-sheet workbook | Test results + coverage report |
+| `test-results` | Two-sheet workbook | ECSS validation plan and coverage report |
 
 ### Requirements (`reqm export requirements`)
 
@@ -41,11 +43,11 @@ Produces a workbook with:
 
 Produces a workbook with:
 
-- **Results** sheet: `Req ID | Test ID | Test Title | Result | Date | Notes`
-- **Coverage** sheet: `Req ID | Title | Verified (Y/N) | Method | Coverage %`
-
-> **Note**: Test outcome data loading is stubbed pending EXP-013 (test file format
-> not yet specified).
+- **Results** sheet: `Req ID | Item ID | Item Title` — one row per `validated_by`
+  link, resolved against loaded `ValidationItem` objects.
+- **Coverage** sheet: `Req ID | Title | Verified (Y/N) | Verification Method | Item Count`
+  — one row per requirement; `Verified` is `Y` when at least one `validated_by`
+  entry exists.
 
 ## Formatting
 
@@ -54,13 +56,14 @@ All exporters share a common style:
 - Bold header row with `#BDD7EE` fill
 - Freeze pane at `A2`
 - Distinct tab colours per sheet
-- Auto-filter on the Requirements sheet
+
+The Requirements exporter additionally sets an auto-filter on the sheet.
 
 ## Writing Custom Exporters
 
 1. Subclass `AbstractExporter` in `reqm/export/` (or your own package).
 2. Set `name` and `description` class attributes.
-3. Implement `export(requirements, folders, output)`.
+3. Implement `export(requirements, folders, items, output)`.
 4. Register via entry point in `pyproject.toml`:
 
 ```toml
