@@ -1,8 +1,9 @@
 """Validation logic for requirements collections."""
 from __future__ import annotations
 from collections import Counter
+import re
 from dataclasses import dataclass
-from reqm.models import Requirement, ValidationItem
+from reqm.models import Requirement, FolderMeta, ValidationItem
 
 ALLOWED_TYPES = {"Functional", "Performance", "Interface", "Constraint"}
 ALLOWED_VERIFICATION = {"Test", "Analysis", "Inspection", "Demonstration"}
@@ -80,13 +81,59 @@ def _check_broken_validated_by_links(
     return errors
 
 
-def _check_unknown_keys(requirements: list[Requirement]) -> list[ValidationError]:
-    """Emit an error for each unrecognised frontmatter key."""
+def _check_id_format(
+    requirements: list[Requirement],
+    folders: list[FolderMeta],
+) -> list[ValidationError]:
+    """Ensure each requirement ID follows the pattern <folder_id>-NNN.
+
+    The folder_id already embeds the specification key (e.g. ``REQM-ARCH``),
+    so the expected pattern for a requirement is ``REQM-ARCH-001``.
+
+    Args:
+        requirements: Full requirements collection.
+        folders: All folder metadata objects for the specification.
+
+    Returns:
+        One ValidationError per requirement whose ID does not match the pattern.
+    """
     errors: list[ValidationError] = []
     for req in requirements:
-        for key in req.extra:
-            errors.append(ValidationError(req_id=req.id, message=f"Unknown frontmatter key: '{key}'"))
+        folder_id = _folder_id_for(req, folders)
+        pattern = rf"^{re.escape(folder_id)}-\d{{3}}$"
+        if not re.match(pattern, req.id):
+            errors.append(
+                ValidationError(
+                    req_id=req.id,
+                    message=(
+                        f"ID '{req.id}' does not match expected format "
+                        f"'{folder_id}-NNN'"
+                    ),
+                )
+            )
     return errors
+
+
+def _folder_id_for(req: Requirement, folders: list[FolderMeta]) -> str:
+    """Return the folder id for a requirement by finding its deepest enclosing folder.
+
+    Args:
+        req: The requirement to locate.
+        folders: All available folder metadata objects.
+
+    Returns:
+        The folder id string (e.g. ``REQM-ARCH``), or empty string if no enclosing folder is found.
+    """
+    best: FolderMeta | None = None
+    for folder in folders:
+        try:
+            req.path.relative_to(folder.path)
+        except ValueError:
+            continue
+        if best is None or len(folder.path.parts) > len(best.path.parts):
+            best = folder
+    return best.id if best else ""
+
 
 
 def _check_enum_values(requirements: list[Requirement]) -> list[ValidationError]:
@@ -108,6 +155,7 @@ def _check_enum_values(requirements: list[Requirement]) -> list[ValidationError]
 def validate(
     requirements: list[Requirement],
     items: list[ValidationItem] | None = None,
+    folders: list[FolderMeta] | None = None,
 ) -> list[ValidationError]:
     """Run all validation rules against the requirements collection.
 
@@ -116,12 +164,13 @@ def validate(
     - No duplicate IDs
     - All derived_from and related_to references resolve to existing IDs
     - Type and verification values are within allowed enumerations
-    - No unrecognised frontmatter keys
+    - ID format matches <folder_id>-NNN (only when folders provided)
     - All validated_by IDs resolve to known validation items (only when items provided)
 
     Args:
         requirements: Full collection of parsed requirements.
         items: Loaded validation items; when None the validated_by check is skipped.
+        folders: Folder metadata for ID format validation; skipped when None.
 
     Returns:
         List of validation errors; empty list means the collection is valid.
@@ -131,7 +180,8 @@ def validate(
     errors.extend(_check_duplicate_ids(requirements))
     errors.extend(_check_broken_links(requirements))
     errors.extend(_check_enum_values(requirements))
-    errors.extend(_check_unknown_keys(requirements))
+    if folders is not None:
+        errors.extend(_check_id_format(requirements, folders))
     if items is not None:
         errors.extend(_check_broken_validated_by_links(requirements, items))
     return errors

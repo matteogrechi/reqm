@@ -8,7 +8,7 @@ Each requirement is a Markdown file with YAML frontmatter.
 
 | Field | Type | Description |
 |---|---|---|
-| `id` | string | Unique identifier (e.g. `REQ-001`) |
+| `id` | string | Unique identifier following the format `<specification_key>-<folder_key>-NNN` (e.g. `REQM-FUN-001`) |
 | `title` | string | Human-readable title |
 | `type` | string | One of: `Functional`, `Performance`, `Interface`, `Constraint` |
 | `verification` | list | One or more of: `Test`, `Analysis`, `Inspection`, `Demonstration` |
@@ -58,11 +58,32 @@ description: Optional description
 ---
 ```
 
+## Specification Metadata
+
+The specification root may contain a `.specification-metadata.md` file. The tool
+discovers the root by walking upward from the current directory until it finds this
+file. Only one of `.specification-metadata.md` or `.project-metadata.md` may exist
+in any directory.
+
+```yaml
+---
+specification_key: REQM
+related_specifications:
+  - id: SYS
+    local_path: ../sys-arch
+---
+```
+
+| Field                    | Description                                                                                    |
+|--------------------------|------------------------------------------------------------------------------------------------|
+| `specification_key`      | Short identifier for this specification; used as the first segment of all requirement IDs.     |
+| `related_specifications` | Related specifications; each entry has `id` and `local_path`.                                  |
+
 ## Example
 
 ```markdown
 ---
-id: REQ-001
+id: REQM-FUN-001
 title: System shall authenticate users
 type: Functional
 priority: High
@@ -71,8 +92,8 @@ stability: Stable
 verification: [Test, Analysis]
 tags: [security]
 relationships:
-  derived_from: [ARCH-001]
-  related_to: [REQ-002]
+  derived_from: [REQM-ARCH-001]
+  related_to: [REQM-FUN-002]
   validated_by: [TEST-001]
 ---
 

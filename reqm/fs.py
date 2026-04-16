@@ -2,7 +2,7 @@
 from __future__ import annotations
 import yaml
 from pathlib import Path
-from reqm.models import Requirement, FolderMeta, ProjectMeta, RelatedProject, ValidationItem
+from reqm.models import Requirement, FolderMeta, SpecMeta, RelatedSpecification, ValidationItem
 
 
 def _split_frontmatter(text: str) -> tuple[str, str]:
@@ -73,16 +73,13 @@ def parse_folder_meta(path: Path) -> FolderMeta:
     text = path.read_text(encoding="utf-8")
     yaml_text, body = _split_frontmatter(text)
     data = yaml.safe_load(yaml_text) or {}
-
-    known_keys = {"id", "title", "description"}
-    extra = {k: v for k, v in data.items() if k not in known_keys}
+    sections = _extract_sections(body)
 
     return FolderMeta(
         path=path.parent,
         id=data.get("id", ""),
         title=data.get("title", ""),
-        description=data.get("description", ""),
-        extra=extra,
+        description=sections.get("Description", "").strip("\n"),
     )
 
 
@@ -113,14 +110,6 @@ def parse_requirement(path: Path) -> Requirement:
     validated_by_raw = rel.get("validated_by", []) or []
     validated_by = [str(v) for v in validated_by_raw]
 
-    known_keys = {
-        "id", "title", "type", "verification", "tags",
-        "derived_from", "related_to", "relationships",
-        "priority", "status", "stability",
-        "description", "rationale", "acceptance_criteria",
-    }
-    extra = {k: v for k, v in data.items() if k not in known_keys}
-
     return Requirement(
         path=path,
         id=data.get("id", ""),
@@ -137,7 +126,6 @@ def parse_requirement(path: Path) -> Requirement:
         status=data.get("status"),
         stability=data.get("stability"),
         validated_by=validated_by,
-        extra=extra,
     )
 
 
@@ -163,12 +151,6 @@ def parse_validation_item(path: Path) -> ValidationItem:
     derived_from = [_df_raw] if isinstance(_df_raw, str) else (_df_raw or [])
     related_to = rel.get("related_to", []) or data.get("related_to", [])
 
-    known_keys = {
-        "id", "title", "method", "level", "status", "priority", "stability",
-        "tags", "relationships", "derived_from", "related_to",
-    }
-    extra = {k: v for k, v in data.items() if k not in known_keys}
-
     return ValidationItem(
         path=path,
         id=data.get("id", ""),
@@ -185,7 +167,6 @@ def parse_validation_item(path: Path) -> ValidationItem:
         preconditions=sections.get("Preconditions", "").strip("\n"),
         procedure=sections.get("Procedure", "").strip("\n"),
         pass_criteria=sections.get("Pass Criteria", "").strip("\n"),
-        extra=extra,
     )
 
 
@@ -204,41 +185,84 @@ def load_folder_meta(folder: Path) -> FolderMeta | None:
     return parse_folder_meta(meta_path)
 
 
-def load_project_meta(root: Path) -> ProjectMeta:
-    """Parse .project-metadata.md from the given root directory.
+def find_spec_root(start: Path) -> Path:
+    """Walk upward from start to find the directory containing .specification-metadata.md.
 
-    Reads the YAML frontmatter and builds a ``ProjectMeta`` instance.
+    At each directory, checks that neither .project-metadata.md nor .folder-metadata.md
+    coexist with .specification-metadata.md, and raises if any incompatible pair is found.
+
+    Args:
+        start: Directory to begin the upward search from.
+
+    Returns:
+        First ancestor directory (inclusive of start) containing .specification-metadata.md.
+
+    Raises:
+        FileNotFoundError: When no .specification-metadata.md is found before the filesystem root.
+        RuntimeError: When .specification-metadata.md coexists with .project-metadata.md or .folder-metadata.md.
+    """
+    current = start.resolve()
+    while True:
+        spec = current / ".specification-metadata.md"
+        legacy = current / ".project-metadata.md"
+        folder = current / ".folder-metadata.md"
+        if spec.exists() and legacy.exists():
+            raise RuntimeError(
+                f"Both .specification-metadata.md and .project-metadata.md exist in {current}; "
+                "remove one before proceeding."
+            )
+        if spec.exists() and folder.exists():
+            raise RuntimeError(
+                f"Both .specification-metadata.md and .folder-metadata.md exist in {current}; "
+                "a directory cannot be both a specification root and a folder."
+            )
+        if spec.exists():
+            return current
+        parent = current.parent
+        if parent == current:
+            raise FileNotFoundError(
+                f"No .specification-metadata.md found in {start} or any parent directory."
+            )
+        current = parent
+
+
+def load_spec_meta(root: Path) -> SpecMeta:
+    """Parse .specification-metadata.md from the given root directory.
+
+    Reads the YAML frontmatter and builds a ``SpecMeta`` instance.
     If the file is absent, returns a default instance with empty values.
 
     Args:
-        root: Directory that may contain a .project-metadata.md file.
+        root: Directory that may contain a .specification-metadata.md file.
 
     Returns:
-        Parsed ProjectMeta (never None).
+        Parsed SpecMeta (never None).
     """
-    meta_path = root / ".project-metadata.md"
+    meta_path = root / ".specification-metadata.md"
     if not meta_path.exists():
-        return ProjectMeta(path=root)
+        return SpecMeta(path=root)
 
     text = meta_path.read_text(encoding="utf-8")
-    yaml_text, _body = _split_frontmatter(text)
+    yaml_text, body = _split_frontmatter(text)
     data = yaml.safe_load(yaml_text) or {}
+    sections = _extract_sections(body)
 
-    related_projects: list[RelatedProject] = []
-    for entry in data.get("related_projects", []) or []:
-        related_projects.append(
-            RelatedProject(
+    related_specifications: list[RelatedSpecification] = []
+    for entry in data.get("related_specifications", []) or []:
+        related_specifications.append(
+            RelatedSpecification(
                 id=entry.get("id", ""),
-                title=entry.get("title", ""),
                 local_path=entry.get("local_path", ""),
             )
         )
 
-    return ProjectMeta(
+    return SpecMeta(
         path=root,
-        project_key=data.get("project_key", ""),
-        validation_items_path=data.get("validation_items_path", "") or "",
-        related_projects=related_projects,
+        id=data.get("id", ""),
+        title=data.get("title", ""),
+        description=sections.get("Description", "").strip("\n"),
+        type=data.get("type", "requirements"),
+        related_specifications=related_specifications,
     )
 
 
@@ -255,6 +279,8 @@ def load_validation_items(root: Path) -> list[ValidationItem]:
     """
     items: list[ValidationItem] = []
     for md_path in sorted(root.rglob("*.md")):
+        if md_path.name == ".folder-metadata.md":
+            continue
         if md_path.name.startswith("."):
             continue
         text = md_path.read_text(encoding="utf-8")

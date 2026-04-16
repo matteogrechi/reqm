@@ -25,9 +25,9 @@ def _req(content: str) -> str:
 
 
 def _make_collection(root: Path, reqs: list[tuple[str, str]]) -> None:
-    """Seed root with a .folder-metadata.md and one file per (name, content) pair."""
-    (root / ".folder-metadata.md").write_text(
-        "---\nid: TST\ntitle: Test Collection\n---\n"
+    """Seed root with .specification-metadata.md and requirement files."""
+    (root / ".specification-metadata.md").write_text(
+        "---\nid: \"\"\nrelated_specifications: []\n---\n"
     )
     for filename, content in reqs:
         (root / filename).write_text(_req(content))
@@ -43,15 +43,17 @@ def _data_lines(output: str) -> list[str]:
 # list
 # ---------------------------------------------------------------------------
 
-def test_list_column_headers(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["list", "--root", str(fixtures_dir)])
+def test_list_column_headers(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["list"])
     assert result.exit_code == 0
     for header in ("ID", "Title", "Type", "Verification", "Folder ID"):
         assert header in result.output
 
 
-def test_list_shows_all_requirements(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["list", "--root", str(fixtures_dir)])
+def test_list_shows_all_requirements(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["list"])
     assert result.exit_code == 0
     rows = _data_lines(result.output)
     ids = [r.split()[0] for r in rows]
@@ -59,15 +61,16 @@ def test_list_shows_all_requirements(fixtures_dir: Path) -> None:
         assert req_id in ids, f"requirement {req_id!r} missing from list output"
 
 
-def test_list_folder_filter_returns_only_matching(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["list", "--root", str(fixtures_dir), "--folder", "GA"])
+def test_list_folder_filter_returns_only_matching(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["list", "--folder", "GA"])
     assert result.exit_code == 0
     rows = _data_lines(result.output)
     ids = [r.split()[0] for r in rows]
     assert ids == ["F"]
 
 
-def test_list_status_filter_includes_match(tmp_path: Path) -> None:
+def test_list_status_filter_includes_match(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1-active.md", """\
             ---
@@ -88,14 +91,15 @@ def test_list_status_filter_includes_match(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["list", "--root", str(tmp_path), "--status", "Active"])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["list", "--status", "Active"])
     assert result.exit_code == 0
     ids = [r.split()[0] for r in _data_lines(result.output)]
     assert "R1" in ids
     assert "R2" not in ids
 
 
-def test_list_status_filter_no_match_returns_empty(tmp_path: Path) -> None:
+def test_list_status_filter_no_match_returns_empty(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -106,7 +110,8 @@ def test_list_status_filter_no_match_returns_empty(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["list", "--root", str(tmp_path), "--status", "Deprecated"])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["list", "--status", "Deprecated"])
     assert result.exit_code == 0
     assert _data_lines(result.output) == []
 
@@ -115,23 +120,25 @@ def test_list_status_filter_no_match_returns_empty(tmp_path: Path) -> None:
 # show
 # ---------------------------------------------------------------------------
 
-def test_show_required_fields(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["show", "A", "--root", str(fixtures_dir)])
+def test_show_required_fields(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["show", "A"])
     assert result.exit_code == 0
     for label in ("ID:", "Title:", "Type:", "Verification:"):
         assert label in result.output
 
 
-def test_show_body_sections(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["show", "A", "--root", str(fixtures_dir)])
+def test_show_body_sections(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["show", "A"])
     assert result.exit_code == 0
     for section in ("Description:", "Rationale:", "Acceptance Criteria:"):
         assert section in result.output
 
 
-def test_show_displays_derived_from_and_related_to(fixtures_dir: Path) -> None:
-    # B is derived from A and related to C
-    result = CliRunner().invoke(cli, ["show", "B", "--root", str(fixtures_dir)])
+def test_show_displays_derived_from_and_related_to(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["show", "B"])
     assert result.exit_code == 0
     assert "Derived From:" in result.output
     assert "A" in result.output
@@ -139,23 +146,25 @@ def test_show_displays_derived_from_and_related_to(fixtures_dir: Path) -> None:
     assert "C" in result.output
 
 
-def test_show_displays_tags(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["show", "A", "--root", str(fixtures_dir)])
+def test_show_displays_tags(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["show", "A"])
     assert result.exit_code == 0
     assert "Tags:" in result.output
     assert "test" in result.output
 
 
-def test_show_nested_requirement(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["show", "F", "--root", str(fixtures_dir)])
+def test_show_nested_requirement(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["show", "F"])
     assert result.exit_code == 0
     assert "Nested requirement" in result.output
     assert "Interface" in result.output
 
 
-def test_show_omits_unset_optional_fields(fixtures_dir: Path) -> None:
-    # A has no priority, status, stability, derived_from, or related_to
-    result = CliRunner().invoke(cli, ["show", "A", "--root", str(fixtures_dir)])
+def test_show_omits_unset_optional_fields(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["show", "A"])
     assert result.exit_code == 0
     assert "Priority:" not in result.output
     assert "Status:" not in result.output
@@ -164,7 +173,7 @@ def test_show_omits_unset_optional_fields(fixtures_dir: Path) -> None:
     assert "Related To:" not in result.output
 
 
-def test_show_optional_fields_when_set(tmp_path: Path) -> None:
+def test_show_optional_fields_when_set(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -178,7 +187,8 @@ def test_show_optional_fields_when_set(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["show", "R1", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["show", "R1"])
     assert result.exit_code == 0
     assert "Priority:" in result.output
     assert "High" in result.output
@@ -192,7 +202,7 @@ def test_show_optional_fields_when_set(tmp_path: Path) -> None:
 # validate
 # ---------------------------------------------------------------------------
 
-def test_validate_exits_one_on_errors(tmp_path: Path) -> None:
+def test_validate_exits_one_on_errors(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -202,11 +212,12 @@ def test_validate_exits_one_on_errors(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
 
 
-def test_validate_reports_missing_required_field(tmp_path: Path) -> None:
+def test_validate_reports_missing_required_field(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -216,11 +227,12 @@ def test_validate_reports_missing_required_field(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert "verification" in result.output.lower()
 
 
-def test_validate_reports_duplicate_id(tmp_path: Path) -> None:
+def test_validate_reports_duplicate_id(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1a.md", """\
             ---
@@ -239,13 +251,14 @@ def test_validate_reports_duplicate_id(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
     assert "DUP" in result.output
     assert "Duplicate" in result.output
 
 
-def test_validate_reports_broken_derived_from(tmp_path: Path) -> None:
+def test_validate_reports_broken_derived_from(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -259,13 +272,14 @@ def test_validate_reports_broken_derived_from(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
     assert "GHOST" in result.output
     assert "derived_from" in result.output
 
 
-def test_validate_reports_broken_related_to(tmp_path: Path) -> None:
+def test_validate_reports_broken_related_to(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -279,13 +293,14 @@ def test_validate_reports_broken_related_to(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
     assert "MISSING" in result.output
     assert "related_to" in result.output
 
 
-def test_validate_reports_invalid_type(tmp_path: Path) -> None:
+def test_validate_reports_invalid_type(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -296,12 +311,13 @@ def test_validate_reports_invalid_type(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
     assert "Bogus" in result.output
 
 
-def test_validate_reports_invalid_verification(tmp_path: Path) -> None:
+def test_validate_reports_invalid_verification(tmp_path: Path, monkeypatch) -> None:
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -312,12 +328,14 @@ def test_validate_reports_invalid_verification(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
     assert "Guess" in result.output
 
 
-def test_validate_reports_unknown_key(tmp_path: Path) -> None:
+def test_validate_ignores_unknown_key(tmp_path: Path, monkeypatch) -> None:
+    """Unknown frontmatter keys are silently ignored; the requirement is otherwise valid."""
     _make_collection(tmp_path, [
         ("R1.md", """\
             ---
@@ -329,12 +347,12 @@ def test_validate_reports_unknown_key(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
-    assert result.exit_code == 1
-    assert "alien_field" in result.output
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
+    assert result.exit_code == 0
 
 
-def test_validate_all_violations_reported(tmp_path: Path) -> None:
+def test_validate_all_violations_reported(tmp_path: Path, monkeypatch) -> None:
     """Multiple violations in one collection all appear in a single run."""
     _make_collection(tmp_path, [
         ("R1.md", """\
@@ -347,35 +365,39 @@ def test_validate_all_violations_reported(tmp_path: Path) -> None:
             ---
             """),
     ])
-    result = CliRunner().invoke(cli, ["validate", "--root", str(tmp_path)])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["validate"])
     assert result.exit_code == 1
     assert "NotAType" in result.output
-    assert "weird_key" in result.output
 
 
 # ---------------------------------------------------------------------------
 # export
 # ---------------------------------------------------------------------------
 
-def test_export_default_output_filename(fixtures_dir: Path) -> None:
+def test_export_default_output_filename(tmp_path: Path, monkeypatch) -> None:
     """Omitting --output creates <exporter>.xlsx in the current directory."""
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        result = runner.invoke(cli, ["export", "requirements", "--root", str(fixtures_dir)])
-        assert result.exit_code == 0
-        assert Path("requirements.xlsx").exists()
+    _make_collection(tmp_path, [
+        ("R1.md", "---\nid: R1\ntitle: T\ntype: Functional\nverification: [Test]\n---\n"),
+    ])
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(cli, ["export", "requirements"])
+    assert result.exit_code == 0
+    assert (tmp_path / "requirements.xlsx").exists()
 
 
-def test_export_requirements_sheet_names(tmp_path: Path, fixtures_dir: Path) -> None:
+def test_export_requirements_sheet_names(tmp_path: Path, fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
     output = tmp_path / "out.xlsx"
-    CliRunner().invoke(cli, ["export", "requirements", "--root", str(fixtures_dir), "-o", str(output)])
+    CliRunner().invoke(cli, ["export", "requirements", "-o", str(output)])
     wb = openpyxl.load_workbook(output)
     assert "Requirements" in wb.sheetnames
 
 
-def test_export_requirements_column_headers(tmp_path: Path, fixtures_dir: Path) -> None:
+def test_export_requirements_column_headers(tmp_path: Path, fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
     output = tmp_path / "out.xlsx"
-    CliRunner().invoke(cli, ["export", "requirements", "--root", str(fixtures_dir), "-o", str(output)])
+    CliRunner().invoke(cli, ["export", "requirements", "-o", str(output)])
     ws = openpyxl.load_workbook(output)["Requirements"]
     headers = [cell.value for cell in ws[1]]
     assert headers == [
@@ -385,34 +407,37 @@ def test_export_requirements_column_headers(tmp_path: Path, fixtures_dir: Path) 
     ]
 
 
-def test_export_requirements_data_rows(tmp_path: Path, fixtures_dir: Path) -> None:
+def test_export_requirements_data_rows(tmp_path: Path, fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
     output = tmp_path / "out.xlsx"
-    CliRunner().invoke(cli, ["export", "requirements", "--root", str(fixtures_dir), "-o", str(output)])
+    CliRunner().invoke(cli, ["export", "requirements", "-o", str(output)])
     ws = openpyxl.load_workbook(output)["Requirements"]
-    # Column 2 is ID (column 1 is Is Folder flag)
     ids = [ws.cell(row=r, column=2).value for r in range(2, ws.max_row + 1)]
     assert "A" in ids
-    assert "F" in ids  # nested requirement must also be exported
+    assert "F" in ids
 
 
-def test_export_traceability_sheet_names(tmp_path: Path, fixtures_dir: Path) -> None:
+def test_export_traceability_sheet_names(tmp_path: Path, fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
     output = tmp_path / "out.xlsx"
-    CliRunner().invoke(cli, ["export", "traceability", "--root", str(fixtures_dir), "-o", str(output)])
+    CliRunner().invoke(cli, ["export", "traceability", "-o", str(output)])
     wb = openpyxl.load_workbook(output)
     assert "Matrix" in wb.sheetnames
     assert "Orphans" in wb.sheetnames
 
 
-def test_export_test_results_sheet_names(tmp_path: Path, fixtures_dir: Path) -> None:
+def test_export_test_results_sheet_names(tmp_path: Path, fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
     output = tmp_path / "out.xlsx"
-    CliRunner().invoke(cli, ["export", "test-results", "--root", str(fixtures_dir), "-o", str(output)])
+    CliRunner().invoke(cli, ["export", "test-results", "-o", str(output)])
     wb = openpyxl.load_workbook(output)
     assert "Results" in wb.sheetnames
     assert "Coverage" in wb.sheetnames
 
 
-def test_export_unknown_error_contains_name(fixtures_dir: Path) -> None:
-    result = CliRunner().invoke(cli, ["export", "no-such-exporter", "--root", str(fixtures_dir)])
+def test_export_unknown_error_contains_name(fixtures_dir: Path, monkeypatch) -> None:
+    monkeypatch.chdir(fixtures_dir)
+    result = CliRunner().invoke(cli, ["export", "no-such-exporter"])
     assert result.exit_code == 1
     assert "no-such-exporter" in result.output
 
@@ -421,7 +446,7 @@ def test_export_unknown_error_contains_name(fixtures_dir: Path) -> None:
 # Full workflow
 # ---------------------------------------------------------------------------
 
-def test_full_workflow(tmp_path: Path) -> None:
+def test_full_workflow(tmp_path: Path, monkeypatch) -> None:
     """list → show → validate → export all succeed on a clean requirement set."""
     root = tmp_path / "reqs"
     root.mkdir()
@@ -460,38 +485,31 @@ def test_full_workflow(tmp_path: Path) -> None:
             ---
             """),
     ])
-
+    monkeypatch.chdir(root)
     runner = CliRunner()
 
-    # list: both requirements appear
-    list_result = runner.invoke(cli, ["list", "--root", str(root)])
+    list_result = runner.invoke(cli, ["list"])
     assert list_result.exit_code == 0
     ids = [r.split()[0] for r in _data_lines(list_result.output)]
     assert "SYS-001" in ids
     assert "SYS-002" in ids
 
-    # show: content of SYS-001 is present
-    show_result = runner.invoke(cli, ["show", "SYS-001", "--root", str(root)])
+    show_result = runner.invoke(cli, ["show", "SYS-001"])
     assert show_result.exit_code == 0
     assert "System performance" in show_result.output
     assert "200ms" in show_result.output
     assert "Priority:" in show_result.output
     assert "High" in show_result.output
 
-    # validate: clean collection passes
-    validate_result = runner.invoke(cli, ["validate", "--root", str(root)])
+    validate_result = runner.invoke(cli, ["validate"])
     assert validate_result.exit_code == 0
     assert "All requirements valid." in validate_result.output
 
-    # export: workbook contains both IDs
     output = tmp_path / "report.xlsx"
-    export_result = runner.invoke(
-        cli, ["export", "requirements", "--root", str(root), "-o", str(output)]
-    )
+    export_result = runner.invoke(cli, ["export", "requirements", "-o", str(output)])
     assert export_result.exit_code == 0
     assert output.exists()
     ws = openpyxl.load_workbook(output)["Requirements"]
-    # Column 2 is ID (column 1 is Is Folder flag)
     exported_ids = [ws.cell(row=r, column=2).value for r in range(2, ws.max_row + 1)]
     assert "SYS-001" in exported_ids
     assert "SYS-002" in exported_ids

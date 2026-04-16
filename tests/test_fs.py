@@ -10,7 +10,8 @@ from reqm.fs import (
     parse_validation_item,
     load_folder_meta,
     load_requirements,
-    load_project_meta,
+    find_spec_root,
+    load_spec_meta,
     load_validation_items,
 )
 
@@ -82,17 +83,13 @@ def test_parse_requirement_with_tests(fixtures_dir: Path):
     assert req.validated_by == ["TC-001", "TC-002"]
 
 
-def test_parse_requirement_extra_keys(fixtures_dir: Path):
-    req = parse_requirement(fixtures_dir / "A-parent-requirement.md")
-    # No extra keys expected in this fixture
-    assert isinstance(req.extra, dict)
-
 
 def test_parse_folder_meta(fixtures_dir: Path):
     meta = parse_folder_meta(fixtures_dir / ".folder-metadata.md")
     assert meta.id == "FIX"
     assert meta.title == "Test Fixtures Folder"
     assert meta.path == fixtures_dir
+    assert "unit tests" in meta.description
 
 
 def test_load_folder_meta_exists(fixtures_dir: Path):
@@ -129,7 +126,6 @@ def test_parse_validation_item(validation_items_dir: Path):
     assert item.level == "System"
     assert item.status == "Draft"
     assert "Objective" in item.objective or item.objective != ""
-    assert item.extra == {}
 
 
 def test_load_validation_items(validation_items_dir: Path):
@@ -144,81 +140,120 @@ def test_load_validation_items_empty_dir(tmp_path: Path):
     assert items == []
 
 
-def test_load_project_meta_missing(tmp_path: Path):
-    """Returns a default ProjectMeta when file is absent."""
-    result = load_project_meta(tmp_path)
+def test_load_spec_meta_missing(tmp_path: Path):
+    """Returns a default SpecMeta when file is absent."""
+    result = load_spec_meta(tmp_path)
     assert result.path == tmp_path
-    assert result.project_key == ""
-    assert result.related_projects == []
+    assert result.id == ""
+    assert result.title == ""
+    assert result.type == "requirements"
+    assert result.related_specifications == []
 
 
-def test_load_project_meta_present(tmp_path: Path):
-    """Parses a valid .project-metadata.md file."""
-    meta_file = tmp_path / ".project-metadata.md"
+def test_load_spec_meta_present(tmp_path: Path):
+    """Parses a valid .specification-metadata.md file."""
+    meta_file = tmp_path / ".specification-metadata.md"
     meta_file.write_text(
         """---
-project_key: REQM
-related_projects:
+id: REQM
+title: reqm Requirements
+type: validation_items
+related_specifications:
   - id: SYS
-    title: System Architecture
     local_path: ../sys-arch
 ---
 
 ## Description
 
-Test project.
+Test specification.
 """
     )
-    result = load_project_meta(tmp_path)
+    result = load_spec_meta(tmp_path)
     assert result.path == tmp_path
-    assert result.project_key == "REQM"
-    assert len(result.related_projects) == 1
-    rp = result.related_projects[0]
-    assert rp.id == "SYS"
-    assert rp.title == "System Architecture"
-    assert rp.local_path == "../sys-arch"
+    assert result.id == "REQM"
+    assert result.title == "reqm Requirements"
+    assert result.type == "validation_items"
+    assert result.description == "Test specification."
+    assert len(result.related_specifications) == 1
+    rs = result.related_specifications[0]
+    assert rs.id == "SYS"
+    assert rs.local_path == "../sys-arch"
 
 
-def test_load_project_meta_empty_related_projects(tmp_path: Path):
-    """Handles missing or null related_projects gracefully."""
-    meta_file = tmp_path / ".project-metadata.md"
+def test_load_spec_meta_empty_related(tmp_path: Path):
+    """Handles missing or null related_specifications gracefully."""
+    meta_file = tmp_path / ".specification-metadata.md"
     meta_file.write_text(
         """---
-project_key: STANDALONE
-related_projects:
+id: STANDALONE
+related_specifications:
 ---
 
 ## Notes
 
-No related projects.
+No related specifications.
 """
     )
-    result = load_project_meta(tmp_path)
-    assert result.project_key == "STANDALONE"
-    assert result.related_projects == []
+    result = load_spec_meta(tmp_path)
+    assert result.id == "STANDALONE"
+    assert result.related_specifications == []
 
 
-def test_load_project_meta_multiple_related(tmp_path: Path):
-    """Parses multiple related_projects entries."""
-    meta_file = tmp_path / ".project-metadata.md"
+def test_load_spec_meta_multiple_related(tmp_path: Path):
+    """Parses multiple related_specifications entries."""
+    meta_file = tmp_path / ".specification-metadata.md"
     meta_file.write_text(
         """---
-project_key: CORE
-related_projects:
+id: CORE
+related_specifications:
   - id: SYS
-    title: System Architecture
     local_path: ../sys-arch
   - id: TEST
-    title: Test Framework
     local_path: /abs/path/to/tests
 ---
 
 ## Description
 
-Core project with multiple relations.
+Core specification with multiple relations.
 """
     )
-    result = load_project_meta(tmp_path)
-    assert len(result.related_projects) == 2
-    assert result.related_projects[0].id == "SYS"
-    assert result.related_projects[1].local_path == "/abs/path/to/tests"
+    result = load_spec_meta(tmp_path)
+    assert len(result.related_specifications) == 2
+    assert result.related_specifications[0].id == "SYS"
+    assert result.related_specifications[1].local_path == "/abs/path/to/tests"
+
+
+def test_find_spec_root_finds_in_current_dir(tmp_path: Path):
+    """Returns start when .specification-metadata.md is in start itself."""
+    (tmp_path / ".specification-metadata.md").write_text("---\nid: X\n---\n")
+    assert find_spec_root(tmp_path) == tmp_path
+
+
+def test_find_spec_root_walks_upward(tmp_path: Path):
+    """Finds .specification-metadata.md in a parent directory."""
+    (tmp_path / ".specification-metadata.md").write_text("---\nid: X\n---\n")
+    subdir = tmp_path / "sub" / "deep"
+    subdir.mkdir(parents=True)
+    assert find_spec_root(subdir) == tmp_path
+
+
+def test_find_spec_root_not_found(tmp_path: Path):
+    """Raises FileNotFoundError when no metadata file exists anywhere."""
+    with pytest.raises(FileNotFoundError):
+        find_spec_root(tmp_path)
+
+
+def test_find_spec_root_coexistence_error(tmp_path: Path):
+    """Raises RuntimeError when both metadata file variants exist."""
+    (tmp_path / ".specification-metadata.md").write_text("---\nid: X\n---\n")
+    (tmp_path / ".project-metadata.md").write_text("---\nproject_key: X\n---\n")
+    with pytest.raises(RuntimeError):
+        find_spec_root(tmp_path)
+
+
+def test_find_spec_root_coexistence_with_folder_metadata(tmp_path: Path):
+    """Raises RuntimeError when .specification-metadata.md and .folder-metadata.md coexist."""
+    (tmp_path / ".specification-metadata.md").write_text("---\nid: X\n---\n")
+    (tmp_path / ".folder-metadata.md").write_text("---\nid: X-FOLD\ntitle: Folder\n---\n")
+    with pytest.raises(RuntimeError):
+        find_spec_root(tmp_path)

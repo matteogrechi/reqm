@@ -1,6 +1,6 @@
 # Validation
 
-reqm validates requirements against four rules. All rules run on every invocation
+reqm validates requirements against six rules. All rules run on every invocation
 of `reqm validate`.
 
 ## Rules
@@ -31,12 +31,25 @@ Field values must be from the allowed set:
 - `type`: `Functional`, `Performance`, `Interface`, `Constraint`
 - `verification` items: `Test`, `Analysis`, `Inspection`, `Demonstration`
 
+### 5. ID Format (`_check_id_format`)
+
+When an `id` is declared in `.specification-metadata.md`, every requirement `id`
+must match the pattern `<folder_id>-NNN` where `folder_id` is the `id` field of
+the enclosing folder's `.folder-metadata.md` and `NNN` is exactly three digits.
+Because folder IDs already embed the specification key (e.g. `REQM-ARCH`), the
+full requirement ID is self-describing without repetition — for example
+`REQM-ARCH-001`.
+
+This rule is skipped when the specification `id` is empty.
+
 ## Usage
 
 ```sh
-reqm validate                        # validates FUN-reqm-product-requirements/ (default)
-reqm validate --root docs/           # validates a different directory
+reqm validate   # discovers the specification root by walking up from the current directory
 ```
+
+The tool finds the specification root by walking upward from the current directory
+until it finds a `.specification-metadata.md` file.
 
 On success: prints `All requirements valid.` and exits 0.
 On failure: prints each `[ID] message` error line and exits 1.

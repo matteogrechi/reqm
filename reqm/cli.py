@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-from reqm.fs import load_requirements, load_folder_meta, load_project_meta, load_validation_items
+from reqm.fs import load_requirements, load_folder_meta, find_spec_root, load_spec_meta, load_validation_items
 from reqm import validate as validate_mod
 from reqm.export.base import AbstractExporter
 from reqm.models import ValidationItem
@@ -49,14 +49,20 @@ def _collect_folders(root: Path) -> list:
 
 
 def _load_items(root: Path) -> list[ValidationItem]:
-    """Load validation items using the path declared in project metadata."""
-    project_meta = load_project_meta(root)
-    if not project_meta.validation_items_path:
-        return []
-    vi_path = Path(project_meta.validation_items_path)
-    if not vi_path.exists():
-        return []
-    return load_validation_items(vi_path)
+    """Load validation items from related_specifications entries whose type is validation_items."""
+    spec_meta = load_spec_meta(root)
+    items: list[ValidationItem] = []
+    for spec in spec_meta.related_specifications:
+        if not spec.local_path:
+            continue
+        vi_path = Path(spec.local_path)
+        if not vi_path.exists():
+            continue
+        related_meta = load_spec_meta(vi_path)
+        if related_meta.type != "validation_items":
+            continue
+        items.extend(load_validation_items(vi_path))
+    return items
 
 
 def _register_exporters(export_group: click.Group) -> None:
@@ -70,11 +76,11 @@ def _register_exporters(export_group: click.Group) -> None:
 
         @click.command(name=instance.name, help=instance.description)
         @click.option("--output", "-o", default=None, help="Output file path")
-        @click.option("--root", default="requirements", show_default=True)
-        def _export_cmd(root: str, output: str | None, _exporter=instance) -> None:
-            reqs = load_requirements(Path(root))
-            folders = _collect_folders(Path(root))
-            items = _load_items(Path(root))
+        def _export_cmd(output: str | None, _exporter=instance) -> None:
+            root = find_spec_root(Path.cwd())
+            reqs = load_requirements(root)
+            folders = _collect_folders(root)
+            items = _load_items(root)
             if output is None:
                 output = f"{_exporter.name}.xlsx"
             _exporter.export(reqs, folders, items, Path(output))
@@ -85,11 +91,11 @@ def _register_exporters(export_group: click.Group) -> None:
 @cli.command()
 @click.option("--folder", default=None, help="Filter by folder ID")
 @click.option("--status", default=None, help="Filter by status")
-@click.option("--root", default="requirements", show_default=True)
-def list(folder: str | None, status: str | None, root: str) -> None:
+def list(folder: str | None, status: str | None) -> None:
     """List requirements."""
-    reqs = load_requirements(Path(root))
-    folders = _collect_folders(Path(root))
+    root = find_spec_root(Path.cwd())
+    reqs = load_requirements(root)
+    folders = _collect_folders(root)
     folder_map = {f.id: f for f in folders}
 
     # Build a lookup: requirement file path → folder id
@@ -119,10 +125,10 @@ def list(folder: str | None, status: str | None, root: str) -> None:
 
 @cli.command()
 @click.argument("req_id")
-@click.option("--root", default="requirements", show_default=True)
-def show(req_id: str, root: str) -> None:
+def show(req_id: str) -> None:
     """Display a single requirement."""
-    reqs = load_requirements(Path(root))
+    root = find_spec_root(Path.cwd())
+    reqs = load_requirements(root)
     target = None
     for r in reqs:
         if r.id == req_id:
@@ -158,12 +164,19 @@ def show(req_id: str, root: str) -> None:
 
 
 @cli.command()
-@click.option("--root", default="requirements", show_default=True)
-def validate(root: str) -> None:
+def validate() -> None:
     """Validate all requirements. Exits non-zero on errors."""
-    reqs = load_requirements(Path(root))
-    items = _load_items(Path(root))
-    errors = validate_mod.validate(reqs, items or None)
+    root = find_spec_root(Path.cwd())
+    reqs = load_requirements(root)
+    folders = _collect_folders(root)
+    spec_meta = load_spec_meta(root)
+    items = _load_items(root)
+    folders_for_validate = folders if spec_meta.id else None
+    errors = validate_mod.validate(
+        reqs,
+        items or None,
+        folders=folders_for_validate,
+    )
     if errors:
         for e in errors:
             click.echo(f"[{e.req_id}] {e.message}")

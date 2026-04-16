@@ -6,10 +6,10 @@ from reqm.validate import (
     _check_broken_links,
     _check_broken_validated_by_links,
     _check_enum_values,
-    _check_unknown_keys,
+    _check_id_format,
     validate,
 )
-from reqm.models import Requirement, ValidationItem
+from reqm.models import Requirement, FolderMeta, ValidationItem
 from pathlib import Path
 
 
@@ -124,20 +124,6 @@ def test_enum_values_all_valid():
     assert errors == []
 
 
-def test_unknown_keys_flagged():
-    req = _req(extra={"foo": "bar", "baz": 1})
-    errors = _check_unknown_keys([req])
-    assert len(errors) == 2
-    assert all("Unknown frontmatter key" in e.message for e in errors)
-    assert any("'foo'" in e.message for e in errors)
-    assert any("'baz'" in e.message for e in errors)
-
-
-def test_no_unknown_keys():
-    req = _req()
-    errors = _check_unknown_keys([req])
-    assert errors == []
-
 
 def test_validate_end_to_end_valid():
     reqs = [
@@ -183,3 +169,55 @@ def test_validate_checks_validated_by_when_items_provided():
     reqs = [_req(id="A", validated_by=["NONEXISTENT"])]
     errors = validate(reqs, items=[])
     assert any("validated_by" in e.message for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# _check_id_format
+# ---------------------------------------------------------------------------
+
+def _folder(folder_id: str, path: str) -> FolderMeta:
+    """Helper to create a minimal FolderMeta."""
+    return FolderMeta(path=Path(path), id=folder_id, title="")
+
+
+def test_id_format_valid():
+    folder = _folder("REQM-FUN", "/spec/REQM-FUN-folder")
+    req = _req(id="REQM-FUN-001", path=Path("/spec/REQM-FUN-folder/req.md"))
+    errors = _check_id_format([req], [folder])
+    assert errors == []
+
+
+def test_id_format_missing_spec_key():
+    folder = _folder("REQM-FUN", "/spec/REQM-FUN-folder")
+    req = _req(id="FUN-001", path=Path("/spec/REQM-FUN-folder/req.md"))
+    errors = _check_id_format([req], [folder])
+    assert len(errors) == 1
+    assert "FUN-001" in errors[0].message
+
+
+def test_id_format_wrong_folder_key():
+    folder = _folder("REQM-FUN", "/spec/REQM-FUN-folder")
+    req = _req(id="REQM-CLI-001", path=Path("/spec/REQM-FUN-folder/req.md"))
+    errors = _check_id_format([req], [folder])
+    assert len(errors) == 1
+
+
+def test_id_format_non_three_digit_number():
+    folder = _folder("REQM-FUN", "/spec/REQM-FUN-folder")
+    req = _req(id="REQM-FUN-1", path=Path("/spec/REQM-FUN-folder/req.md"))
+    errors = _check_id_format([req], [folder])
+    assert len(errors) == 1
+
+
+def test_id_format_skipped_when_no_folders():
+    req = _req(id="anything", path=Path("/spec/REQM-FUN-folder/req.md"))
+    errors = validate([req], folders=None)
+    id_errors = [e for e in errors if "format" in e.message.lower()]
+    assert id_errors == []
+
+
+def test_id_format_integrated_via_validate():
+    folder = _folder("REQM-FUN", "/spec/REQM-FUN-folder")
+    req = _req(id="REQM-FUN-001", path=Path("/spec/REQM-FUN-folder/req.md"))
+    errors = validate([req], folders=[folder])
+    assert errors == []
