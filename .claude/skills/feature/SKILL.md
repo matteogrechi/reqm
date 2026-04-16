@@ -9,7 +9,7 @@ Load this skill before acting on any feature request or feature change.
 
 ## Guardrails
 
-- **Never touch `FUN-reqm-product-requirements/` without explicit user confirmation** — requirements are the contract, not a scratch pad.
+- **Never touch `spec/` without explicit user confirmation** — requirements are the contract, not a scratch pad.
 - **Never start implementing before the user confirms the plan** — show the requirement delta and implementation plan first.
 - **No speculative scope** — only add requirements and code that directly address what the user asked for.
 - **Requirements drive implementation** — if a feature has no requirement backing it, do not implement it.
@@ -18,7 +18,7 @@ Load this skill before acting on any feature request or feature change.
 
 ### 1. Read the existing requirements
 
-Glob every `.md` file under `FUN-reqm-product-requirements/` and read each one. Build a mental map of:
+Glob every `.md` file under `spec/` and read each one. Build a mental map of:
 
 - Which requirement IDs already exist
 - Which areas (CLI, ARCH, EXP, …) are relevant to the requested change
@@ -34,7 +34,7 @@ For each requirement that could conflict with or be superseded by the request, n
 
 ### 3. Draft the requirement delta
 
-Produce the minimal set of changes to `FUN-reqm-product-requirements/`:
+Produce the minimal set of changes to `spec/`:
 
 **New requirements** — create a new `.md` file following the project convention:
 
@@ -92,11 +92,11 @@ Do **not** write any file until the user explicitly confirms.
 
 Apply changes in this order:
 
-1. Write or update requirement files in `FUN-reqm-product-requirements/`.
+1. Write or update requirement files in `spec/`.
 2. Implement code changes following the relevant module skill
    (`/exporter`, `/validate`, `/models`, etc.) if applicable.
 3. Run `uv run pytest` — fix until green.
-4. Run `uv run reqm validate FUN-reqm-product-requirements/` — fix until clean.
+4. Run `uv run reqm validate spec/` — fix until clean.
 5. Update `docs/` to reflect the new state.
 
 ## Done checklist
@@ -106,5 +106,5 @@ Apply changes in this order:
 - [ ] New/updated requirements written with complete frontmatter and all three body sections
 - [ ] User confirmed the plan before any file was created or edited
 - [ ] `uv run pytest` passes
-- [ ] `uv run reqm validate FUN-reqm-product-requirements/` passes
+- [ ] `uv run reqm validate spec/` passes
 - [ ] `docs/` updated if behaviour changed

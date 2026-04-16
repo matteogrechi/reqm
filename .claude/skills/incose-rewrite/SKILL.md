@@ -9,7 +9,7 @@ Load this skill before creating, rewriting, or auditing any requirement file.
 
 ## Guardrails
 
-- **Never touch files inside `FUN-reqm-product-requirements/`** — that directory is read-only.
+- **Never touch files inside `spec/`** — that directory is read-only.
 - **One "shall" statement per file** — compound requirements must be split.
 - **No TBD or TBC content** in an `Approved` requirement — mark it `Draft` instead.
 - **Every new or rewritten requirement must include** `priority`, `status`, and `stability`.

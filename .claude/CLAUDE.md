@@ -8,14 +8,14 @@ Excel reports. It never writes requirement files — the user owns those.
 
 ## Source of truth
 
-**Read `FUN-reqm-product-requirements/` before every coding session.**
+**Read `spec/` before every coding session.**
 All functional behaviour, CLI commands, and export formats are specified there.
 When requirements change, update code and docs to match. Do not implement anything
 not covered by requirements without asking first.
 
 ## Absolute invariants — never violate these
 
-- The tool never creates, edits, or deletes files inside `FUN-reqm-product-requirements/`
+- The tool never creates, edits, or deletes files inside `spec/`
 - `AbstractExporter` in `reqm/export/base.py` is the sole plugin contract;
   all exporters must subclass it and nothing else
 - All exporters are discovered via `reqm.exporters` entry points — the CLI
@@ -56,7 +56,7 @@ uv run reqm validate <path>
 
 ## Workflow
 
-1. Read all files under `FUN-reqm-product-requirements/`
+1. Read all files under `spec/`
 2. Diff requirements against current implementation
 3. Implement what is missing or changed
 4. Update `docs/` to reflect the current state

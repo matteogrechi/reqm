@@ -23,4 +23,4 @@ Consistent with other commands, `--root` enables validation of requirements stor
 ## Acceptance Criteria
 
 - `reqm validate --root <path>` validates requirements found under `<path>`.
-- When `--root` is specified, no requirements are read from `FUN-reqm-product-requirements/`.
+- When `--root` is specified, no requirements are read from `spec/`.
