@@ -6,13 +6,29 @@ build-backend = "setuptools.build_meta"
 name = "reqm"
 version = "0.1.0"
 description = "Minimal requirements manager — read, validate, export"
-license = {text = "MIT"}
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Matteo Grechi", email = "matteogrechi98@gmail.com"},
+]
+keywords = ["requirements", "management", "traceability", "ECSS", "export"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Utilities",
+]
 requires-python = ">=3.14"
 dependencies = [
     "click>=8.1",
     "pyyaml>=6.0",
     "openpyxl>=3.1",
 ]
+
+[project.urls]
+Source = "https://github.com/matteogrechi/reqm"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov"]

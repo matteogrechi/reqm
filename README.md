@@ -10,21 +10,30 @@ Minimal requirements manager. Read, validate, export — nothing else.
 - **pip** (or **uv** for faster installs)
 - Supported platforms: macOS, Linux
 
-### Steps
+### From source (development)
 
 ```bash
-# Using pip
-pip install -e ".[dev]"
+# Recommended — install + dev dependencies via uv
+make install-dev
 
-# Using uv (recommended)
+# Or manually
 uv sync --all-extras
 ```
 
-This installs `reqm` in editable mode along with its dependencies:
+### As a package
+
+```bash
+pip install .
+# or
+uv pip install .
+```
+
+Dependencies installed automatically:
+
 - **click** — CLI framework
 - **pyyaml** — YAML frontmatter parsing
 - **openpyxl** — Excel export
-- **pytest** (dev) — test suite
+- **pytest** (dev extra) — test suite
 
 ## Usage
 
@@ -42,12 +51,17 @@ reqm export test-results -o v.xlsx # export test results
 ## Requirements are markdown files
 
 ```text
-FUN-reqm-product-requirements/
-├── .folder-metadata.md            # folder metadata
-├── CLI-cli-commands/
+spec/
+├── .specification-metadata.md     # spec root marker (id, related_specifications)
+├── REQM-ARCH-architecture/
+│   ├── .folder-metadata.md        # folder id + title
+│   ├── REQM-ARCH-001-*.md         # one file per requirement
+│   └── ...
+├── REQM-CLI-cli-commands/
 │   ├── .folder-metadata.md
-│   └── CLI-001-list.md            # one file per requirement
-└── EXP-export-reports/
+│   └── ...
+└── REQM-EXP-export-reports/
+    ├── .folder-metadata.md
     └── ...
 ```
 
@@ -76,7 +90,7 @@ The tool shall ...
 
 1. Subclass `reqm.export.base.AbstractExporter`
 2. Set `name` and `description`
-3. Implement `export(requirements, folders, output)`
+3. Implement `export(requirements, folders, items, output)`
 4. Register in `pyproject.toml`:
 
    ```toml
